@@ -47,6 +47,8 @@ type DebPackage struct {
 	MaintainerEmail string
 	Metadata map[string]interface{}
 
+	Architecture string
+
 	Preinst Readable
 	Postinst Readable
 	Prerm Readable

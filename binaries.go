@@ -94,6 +94,28 @@ func debBuild(dest platforms.Platform, tp TaskParams) (err error) {
 }
 */
 
+func resolveArches(arches string) ([]string, error) {
+	if arches == "any" || arches == "" {
+		return []string{ "i386", "armel", "amd64" }, nil
+	}
+	return []string{arches}, nil
+}
+
+func (pkg *DebPackage) BuildAll() error {
+	arches, err := resolveArches(pkg.Architecture)
+		if err != nil {
+			return err
+		}
+
+	for _, arch := range arches {
+		err := pkg.Build(arch)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (pkg *DebPackage) Build(arch string) error {
 	if pkg.IsRmtemp {
 		defer os.RemoveAll(pkg.TmpDir)
