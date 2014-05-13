@@ -21,7 +21,7 @@ import (
 	//Tip for Forkers: please 'clone' from my url and then 'pull' from your url. That way you wont need to change the import path.
 	//see https://groups.google.com/forum/?fromgroups=#!starred/golang-nuts/CY7o2aVNGZY
 	"github.com/laher/goxc/archive"
-	"github.com/laher/goxc/archive/ar"
+	"github.com/laher/ar-go/ar"
 	"io/ioutil"
 	"log"
 	"os"
@@ -35,8 +35,8 @@ func NewPackage(name, version, maintainer string, executables []string) *DebPack
 	pkg.Version = version
 	pkg.Maintainer = maintainer
 	pkg.ExecutablePaths = executables
-	pkg.TmpDir = "tmp"
-	pkg.DestDir = "dist"
+	pkg.TmpDir = "_test/tmp"
+	pkg.DestDir = "_test/dist"
 	pkg.IsRmtemp = true
 	return pkg
 }
@@ -146,6 +146,30 @@ func (pkg *DebPackage) Build(arch string) error {
 		controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr, ArchivePath: "postinst"})
 	}
 
+	barr2, err := toBytes(pkg.Preinst)
+	if err != nil {
+		return err
+	}
+	if barr2 != nil {
+		controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr2, ArchivePath: "preinst"})
+	}
+
+	barr3, err := toBytes(pkg.Postrm)
+	if err != nil {
+		return err
+	}
+	if barr3 != nil {
+		controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr3, ArchivePath: "postrm"})
+	}
+
+	barr4, err := toBytes(pkg.Prerm)
+	if err != nil {
+		return err
+	}
+	if barr4 != nil {
+		controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr4, ArchivePath: "prerm"})
+	}
+
 	err = archive.TarGz(filepath.Join(pkg.TmpDir, "control.tar.gz"), controlFiles)
 	if err != nil {
 		return err
@@ -169,10 +193,11 @@ func (pkg *DebPackage) Build(arch string) error {
 	}
 	err = ioutil.WriteFile(filepath.Join(pkg.TmpDir, "debian-binary"), []byte("2.0\n"), 0644)
 	targetFile := filepath.Join(pkg.DestDir, fmt.Sprintf("%s_%s_%s.deb", pkg.Name, pkg.Version, arch)) //goxc_0.5.2_i386.deb")
-	inputs := [][]string{
-		[]string{filepath.Join(pkg.TmpDir, "debian-binary"), "debian-binary"},
-		[]string{filepath.Join(pkg.TmpDir, "control.tar.gz"), "control.tar.gz"},
-		[]string{filepath.Join(pkg.TmpDir, "data.tar.gz"), "data.tar.gz"}}
-	err = ar.ArForDeb(targetFile, inputs)
+
+	inputs := []ar.Archivable{
+		&ar.FilePathArchivable{Filename:filepath.Join(pkg.TmpDir,"debian-binary"),ArchivePath:"debian-binary"},
+		&ar.FilePathArchivable{Filename:filepath.Join(pkg.TmpDir,"control.tar.gz"),ArchivePath:"control.tar.gz"},
+		&ar.FilePathArchivable{Filename:filepath.Join(pkg.TmpDir,"data.tar.gz"),ArchivePath:"data.tar.gz"}}
+	err = ar.Ar(targetFile, inputs)
 	return err
 }

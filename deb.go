@@ -35,7 +35,10 @@ func toBytes(ra Readable) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ioutil.ReadAll(r)
+	
+	b, err := ioutil.ReadAll(r)
+	println("all: ", string(b))
+	return b, err
 }
 
 //package
