@@ -36,6 +36,6 @@ func TestSdebBuild(t *testing.T) {
 	pkg.Description = "hiya"
 	err := pkg.SourceBuild()
 	if err != nil {
-		t.Fatalf("%v", err)
+		t.Fatalf("Error building source package: %v", err)
 	}
 }

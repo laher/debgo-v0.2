@@ -73,3 +73,19 @@ type DebPackage struct {
 	DestDir string
 	WorkingDir string
 }
+
+
+func NewPackage(name, version, maintainer string, executables []string) *DebPackage {
+	pkg := new(DebPackage)
+	pkg.Name = name
+	pkg.Version = version
+	pkg.Maintainer = maintainer
+	pkg.ExecutablePaths = executables
+
+	pkg.TmpDir = "_test/tmp"
+	pkg.DestDir = "_test/dist"
+	pkg.IsRmtemp = true
+	pkg.WorkingDir = "."
+
+	return pkg
+}

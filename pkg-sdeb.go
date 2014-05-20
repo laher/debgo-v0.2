@@ -189,13 +189,15 @@ func (pkg *DebPackage) SourceBuild() error {
 
 	//debian/changelog (slightly different)
 	var changelogData []byte
-	rdr, err := pkg.Changelog.GetReader()
-	if err != nil {
-		return err
-	}
-	changelogData, err = ioutil.ReadAll(rdr)
-	if err != nil {
-		return err
+	if pkg.Changelog != nil {
+		rdr, err := pkg.Changelog.GetReader()
+		if err != nil {
+			return err
+		}
+		changelogData, err = ioutil.ReadAll(rdr)
+		if err != nil {
+			return err
+		}
 	}
 	/*
 	_, err = os.Stat(changelogFilename)

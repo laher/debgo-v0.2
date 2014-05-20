@@ -29,17 +29,6 @@ import (
 )
 
 
-func NewPackage(name, version, maintainer string, executables []string) *DebPackage {
-	pkg := new(DebPackage)
-	pkg.Name = name
-	pkg.Version = version
-	pkg.Maintainer = maintainer
-	pkg.ExecutablePaths = executables
-	pkg.TmpDir = "_test/tmp"
-	pkg.DestDir = "_test/dist"
-	pkg.IsRmtemp = true
-	return pkg
-}
 
 func (pkg *DebPackage) getControlFileContent(arch string) []byte {
 	control := fmt.Sprintf("Package: %s\nPriority: Extra\n", pkg.Name)
