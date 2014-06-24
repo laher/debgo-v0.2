@@ -18,14 +18,14 @@ package deb
 
 import (
 	"fmt"
-	//Tip for Forkers: please 'clone' from my url and then 'pull' from your url. That way you wont need to change the import path.
-	//see https://groups.google.com/forum/?fromgroups=#!starred/golang-nuts/CY7o2aVNGZY
-	"github.com/laher/goxc/archive"
-	"github.com/laher/ar-go/ar"
-	"io/ioutil"
+	"archive/tar"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
+	"compress/gzip"
 )
 
 
@@ -92,9 +92,9 @@ func resolveArches(arches string) ([]string, error) {
 
 func (pkg *DebPackage) BuildAll() error {
 	arches, err := resolveArches(pkg.Architecture)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
 	for _, arch := range arches {
 		err := pkg.Build(arch)
@@ -106,6 +106,7 @@ func (pkg *DebPackage) BuildAll() error {
 }
 
 func (pkg *DebPackage) Build(arch string) error {
+	log.Printf("Building for arch %s", arch)
 	if pkg.IsRmtemp {
 		defer os.RemoveAll(pkg.TmpDir)
 	}
@@ -113,15 +114,74 @@ func (pkg *DebPackage) Build(arch string) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(filepath.Join(pkg.TmpDir, "debian-binary"), []byte("2.0\n"), 0644)
+	err = pkg.BuildControlArchive(arch)
 	if err != nil {
 		return err
 	}
+	err = pkg.BuildDataArchive(arch)
+	if err != nil {
+		return err
+	}
+	err = pkg.BuildDebFile(arch)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+func newTarHeader(path string, datalen int64, mode int64) *tar.Header {
+	h := new(tar.Header)
+	//backslash-only paths
+	h.Name = strings.Replace(path, "\\", "/", -1)
+	h.Size = datalen
+	h.Mode = mode
+	h.ModTime = time.Now()
+	return h
+}
+
+func (pkg *DebPackage) BuildControlArchive(arch string) error {
+	archiveFilename := filepath.Join(pkg.TmpDir, "control.tar.gz")
+	fw, err := os.Create(archiveFilename)
+	if err != nil {
+		return err
+	}
+	defer fw.Close()
+
+	// gzip write
+	gw := gzip.NewWriter(fw)
+	defer gw.Close()
+
+	// tar write
+	tw := tar.NewWriter(gw)
+	defer tw.Close()
 
 	controlContent := pkg.getControlFileContent(arch)
 	if pkg.IsVerbose {
 		log.Printf("Control file:\n%s", string(controlContent))
 	}
+	err = tw.WriteHeader(newTarHeader("control", int64(len(controlContent)), 0644))
+	if err != nil {
+		return err
+	}
+	_, err = tw.Write(controlContent)
+	if err != nil {
+		return err
+	}
+	if pkg.Postinst != nil {
+		pi, err := toBytes(pkg.Postinst)
+		if err != nil {
+			return err
+		}
+		err = tw.WriteHeader(newTarHeader("postinst", int64(len(pi)), 0755))
+		if err != nil {
+			return err
+		}
+		_, err = tw.Write(pi)
+		if err != nil {
+			return err
+		}
+	}
+	/*
 	err = ioutil.WriteFile(filepath.Join(pkg.TmpDir, "control"), controlContent, 0644)
 	if err != nil {
 		return err
@@ -163,30 +223,64 @@ func (pkg *DebPackage) Build(arch string) error {
 	if err != nil {
 		return err
 	}
-	//build
-	items := []archive.ArchiveItem{}
+	*/
+	return tw.Close()
+}
+
+func (pkg *DebPackage) BuildDataArchive(arch string) error {
+	archiveFilename := filepath.Join(pkg.TmpDir, "data.tar.gz")
+	fw, err := os.Create(archiveFilename)
+	if err != nil {
+		return err
+	}
+	defer fw.Close()
+
+	// gzip write
+	gw := gzip.NewWriter(fw)
+	defer gw.Close()
+
+	// tar write
+	tw := tar.NewWriter(gw)
+	defer tw.Close()
 
 	for _, executable := range pkg.ExecutablePaths {
-		exeName := filepath.Base(executable)
-		items = append(items, archive.ArchiveItem{FileSystemPath: executable, ArchivePath: "/usr/bin/" + exeName})
+		exeName := "/usr/bin/" + filepath.Base(executable)
+		fi, err := os.Open(executable)
+		if err != nil {
+			return err
+		}
+		finf, err := fi.Stat()
+		if err != nil {
+			return err
+		}
+		err = tw.WriteHeader(newTarHeader(exeName, finf.Size(), int64(finf.Mode())))
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(tw, fi)
+		if err != nil {
+			return err
+		}
+
 	}
 	//TODO add resources to /usr/share/appName/
-	err = archive.TarGz(filepath.Join(pkg.TmpDir, "data.tar.gz"), items)
+	//err := archive.TarGz(filepath.Join(pkg.TmpDir, "data.tar.gz"), items)
+	return tw.Close()
+}
+
+func (pkg *DebPackage) BuildDebFile(arch string) error {
+	err := os.MkdirAll(pkg.DestDir, 0755)
 	if err != nil {
 		return err
 	}
-	
-	err = os.MkdirAll(pkg.DestDir, 0755)
-	if err != nil {
-		return err
-	}
-	err = ioutil.WriteFile(filepath.Join(pkg.TmpDir, "debian-binary"), []byte("2.0\n"), 0644)
+	//err = ioutil.WriteFile(filepath.Join(pkg.TmpDir, "debian-binary"), []byte("2.0\n"), 0644)
+
 	targetFile := filepath.Join(pkg.DestDir, fmt.Sprintf("%s_%s_%s.deb", pkg.Name, pkg.Version, arch)) //goxc_0.5.2_i386.deb")
 
-	inputs := []ar.Archivable{
-		&ar.FilePathArchivable{Filename:filepath.Join(pkg.TmpDir,"debian-binary"),ArchivePath:"debian-binary"},
-		&ar.FilePathArchivable{Filename:filepath.Join(pkg.TmpDir,"control.tar.gz"),ArchivePath:"control.tar.gz"},
-		&ar.FilePathArchivable{Filename:filepath.Join(pkg.TmpDir,"data.tar.gz"),ArchivePath:"data.tar.gz"}}
-	err = ar.Ar(targetFile, inputs)
+	log.Printf("prepared for arch %s", arch)
+	bdeb := NewBinaryDeb(targetFile, pkg.TmpDir)
+	bdeb.SetDefaults()
+	log.Printf("trying to write .deb file %s", arch)
+	err = bdeb.WriteAll()
 	return err
 }
