@@ -2,30 +2,44 @@ package deb
 
 import (
 	"testing"
+	"os"
+	"path/filepath"
 )
 
 func TestDebBuild(t *testing.T) {
-	exes := []string{"a.b"}
-	pkg := NewPackage("testpkg", "0.0.2", "me", exes)
-	pkg.Description = "hiya"
-	pkg.IsRmtemp = false
-	/*
-	pkg.ControlFilesBytes = map[string]string{
-		"preinst": "#!/bin/bash\necho 'preinst'",
-		"postinst": "#!/bin/bash\necho 'postinst'",
-		"prerm": "#!/bin/bash\necho 'prerm'",
-		"postrm": "#!/bin/bash\necho 'postrm'"
-	}
-	*/
-/*
-	pkg.Preinst = TarEntryExecutable("preinst", strings.NewReader("#!/bin/bash\necho 11111"))
-	pkg.Postinst = TarEntryExecutable("postinst", strings.NewReader("#!/bin/bash\necho 22222"))
-	pkg.Prerm = TarEntryExecutable("prerm", strings.NewReader("#!/bin/bash\necho 33333"))
-	pkg.Postrm = TarEntryExecutable("postrm", strings.NewReader("#!/bin/bash\necho 44444"))
-	*/
-	pkg.IsVerbose = true
-	err := pkg.DefaultBuildAllArches()
+	exes := []string{"_test/a.b"}
+	err := createExes(exes)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
+	pkg := NewPackage("testpkg", "0.0.2", "me", exes)
+	pkg.Description = "hiya"
+	pkg.IsRmtemp = false
+	pkg.IsVerbose = true
+	err = pkg.Build("amd64")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+}
+
+func createExes(exes []string) error {
+	for _, exe := range exes {
+		err := os.MkdirAll(filepath.Dir(exe), 0777)
+		if err != nil {
+			return err
+		}
+		fi, err := os.Create(exe)
+		if err != nil {
+			return err
+		}
+		_, err = fi.Write([]byte("echo 1"))
+		if err != nil {
+			return err
+		}
+		err = fi.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

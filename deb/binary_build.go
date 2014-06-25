@@ -131,7 +131,7 @@ func (pkg *DebPackage) Build(arch string) error {
 		log.Printf("Closed control archive")
 	}
 
-	dataTgzw, err = pkg.InitDataArchive(arch, true)
+	dataTgzw, err := pkg.InitDataArchive(arch, true)
 	if err != nil {
 		return err
 	}
@@ -247,7 +247,7 @@ func (pkg *DebPackage) InitDataArchive(arch string, addExecutables bool) (*TarGz
 	return tgzw, err
 }
 
-func (pkg *DebPackage) BuildDebFile(arch string) error {
+func (pkg *DebPackage) BuildDebFile(arch string, controlArchFile, dataArchFile string) error {
 	err := os.MkdirAll(pkg.DestDir, 0755)
 	if err != nil {
 		return err
@@ -258,7 +258,8 @@ func (pkg *DebPackage) BuildDebFile(arch string) error {
 
 	log.Printf("prepared for arch %s", arch)
 	bdeb := NewBinaryDeb(targetFile, pkg.TmpDir)
-	bdeb.SetDefaults()
+	bdeb.ControlArchFile = controlArchFile
+	bdeb.DataArchFile = dataArchFile
 	log.Printf("trying to write .deb file %s", arch)
 	err = bdeb.WriteAll()
 	return err

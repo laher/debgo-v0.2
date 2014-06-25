@@ -83,6 +83,7 @@ func (bdeb *BinaryDeb) ExtractAll() ([]string, error) {
 
 func NewBinaryDeb(filename string, tmpDir string) *BinaryDeb {
 	bdeb := &BinaryDeb{}
+	bdeb.SetDefaults()
 	bdeb.Filename = filename
 	bdeb.TmpDir = tmpDir
 	return bdeb
