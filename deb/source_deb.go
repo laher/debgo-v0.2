@@ -117,7 +117,7 @@ func sdebAddSources(goPathRoot, codeDir, prefix string, tgzw *TarGzWriter) error
 		if err != nil {
 			return fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
 		}
-		tgzw.Tw.WriteHeader(newTarHeader(destName, int64(finf.Size()), 0644))
+		tgzw.Tw.WriteHeader(NewTarHeader(destName, int64(finf.Size()), 0644))
 		if err != nil {
 			return err
 		}

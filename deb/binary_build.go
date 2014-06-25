@@ -83,9 +83,13 @@ func resolveArches(arches string) ([]string, error) {
 	}
 	return []string{arches}, nil
 }
-
-func (pkg *DebPackage) BuildAll() error {
+func (pkg *DebPackage) GetArches() ([]string, error) {
 	arches, err := resolveArches(pkg.Architecture)
+	return arches, err
+}
+
+func (pkg *DebPackage) DefaultBuildAllArches() error {
+	arches, err := pkg.GetArches()
 	if err != nil {
 		return err
 	}
@@ -101,14 +105,17 @@ func (pkg *DebPackage) BuildAll() error {
 
 func (pkg *DebPackage) Build(arch string) error {
 	log.Printf("Building for arch %s", arch)
+	//defer removal ...
 	if pkg.IsRmtemp {
 		defer os.RemoveAll(pkg.TmpDir)
 	}
+	//make tmpDir
 	err := os.MkdirAll(pkg.TmpDir, 0755)
 	if err != nil {
 		return err
 	}
-	tgzw, err := pkg.BuildControlArchive(arch)
+
+	controlTgzw, err := pkg.InitControlArchive(arch, true)
 	if err != nil {
 		return err
 	}
@@ -116,7 +123,7 @@ func (pkg *DebPackage) Build(arch string) error {
 		log.Printf("Wrote control archive")
 	}
 
-	err = tgzw.Close()
+	err = controlTgzw.Close()
 	if err != nil {
 		return err
 	}
@@ -124,53 +131,57 @@ func (pkg *DebPackage) Build(arch string) error {
 		log.Printf("Closed control archive")
 	}
 
-	tgzw, err = pkg.BuildDataArchive(arch)
+	dataTgzw, err = pkg.InitDataArchive(arch, true)
 	if err != nil {
 		return err
 	}
-	err = tgzw.Close()
+	err = dataTgzw.Close()
 	if err != nil {
 		return err
 	}
-	err = pkg.BuildDebFile(arch)
+	err = pkg.BuildDebFile(arch, controlTgzw.Filename, dataTgzw.Filename)
 	if err != nil {
 		return err
 	}
 	return err
 }
-func (pkg *DebPackage) BuildControlArchive(arch string) (*TarGzWriter, error) {
+
+func (pkg *DebPackage) InitControlArchive(arch string, generateControlFile bool) (*TarGzWriter, error) {
 	archiveFilename := filepath.Join(pkg.TmpDir, "control.tar.gz")
 	tgzw, err := NewTarGzWriter(archiveFilename)
 	if err != nil {
 		return nil, err
 	}
-	controlContent := pkg.getControlFileContent(arch)
-	if pkg.IsVerbose {
-		log.Printf("Control file:\n%s", string(controlContent))
+
+	if generateControlFile {
+		controlContent := pkg.getControlFileContent(arch)
+		if pkg.IsVerbose {
+			log.Printf("Control file:\n%s", string(controlContent))
+		}
+		err = tgzw.AddBytes(controlContent, "control", 0644)
+		if err != nil {
+			return nil, err
+		}
 	}
-	err = tgzw.Tw.WriteHeader(newTarHeader("control", int64(len(controlContent)), 0644))
-	if err != nil {
-		return nil, err
-	}
+
+	/*
+		//err = tgzw.Tw.WriteHeader(NewTarHeader("control", int64(len(controlContent)), 0644))
 	_, err = tgzw.Tw.Write(controlContent)
 	if err != nil {
 		return nil, err
 	}
+	
 	if pkg.Postinst != nil {
 		pi, err := toBytes(pkg.Postinst)
 		if err != nil {
 			return nil, err
 		}
-		err = tgzw.Tw.WriteHeader(newTarHeader("postinst", int64(len(pi)), 0755))
-		if err != nil {
-			return nil, err
-		}
-		_, err = tgzw.Tw.Write(pi)
+		//err = tgzw.Tw.WriteHeader(NewTarHeader("postinst", int64(len(pi)), 0755))
+		err = tgzw.AddBytes(pi, "postinst", 0644)
 		if err != nil {
 			return nil, err
 		}
 	}
-	/*
 		err = ioutil.WriteFile(filepath.Join(pkg.TmpDir, "control"), controlContent, 0644)
 		if err != nil {
 			return err
@@ -216,43 +227,21 @@ func (pkg *DebPackage) BuildControlArchive(arch string) (*TarGzWriter, error) {
 	return tgzw, err
 }
 
-func (pkg *DebPackage) BuildDataArchive(arch string) (*TarGzWriter, error) {
+func (pkg *DebPackage) InitDataArchive(arch string, addExecutables bool) (*TarGzWriter, error) {
 	archiveFilename := filepath.Join(pkg.TmpDir, "data.tar.gz")
-
 	tgzw, err := NewTarGzWriter(archiveFilename)
 	if err != nil {
 		return nil, err
 	}
-	for _, executable := range pkg.ExecutablePaths {
-		exeName := "/usr/bin/" + filepath.Base(executable)
-		err = tgzw.AddFile(executable, exeName)
-		if err != nil {
-			tgzw.Close()
-			return nil, err
+	if addExecutables {
+		for _, executable := range pkg.ExecutablePaths {
+			exeName := "/usr/bin/" + filepath.Base(executable)
+			err = tgzw.AddFile(executable, exeName)
+			if err != nil {
+				tgzw.Close()
+				return nil, err
+			}
 		}
-		/*
-		fi, err := os.Open(executable)
-		if err != nil {
-			tgzw.Close()
-			return nil, err
-		}
-		finf, err := fi.Stat()
-		if err != nil {
-			tgzw.Close()
-			return nil, err
-		}
-		err = tgzw.Tw.WriteHeader(newTarHeader(exeName, finf.Size(), int64(finf.Mode())))
-		if err != nil {
-			tgzw.Close()
-			return nil, err
-		}
-		_, err = io.Copy(tgzw.Tw, fi)
-		if err != nil {
-			tgzw.Close()
-			return nil, err
-		}
-		*/
-
 	}
 	//TODO add resources to /usr/share/appName/
 	return tgzw, err

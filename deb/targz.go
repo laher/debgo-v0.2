@@ -27,7 +27,17 @@ import (
 )
 
 
-func newTarHeader(path string, datalen int64, mode int64) *tar.Header {
+
+
+// TarGzWriter encapsulates the tar, gz and file operations of a TarGz file
+type TarGzWriter struct {
+	Filename string // Filename
+	Fw io.WriteCloser // File writer
+	Tw *tar.Writer // Tar writer (wraps the io.writer)
+	Gw *gzip.Writer // Gzip writer (wraps the tar writer)
+}
+
+func NewTarHeader(path string, datalen int64, mode int64) *tar.Header {
 	h := new(tar.Header)
 	//backslash-only paths
 	h.Name = strings.Replace(path, "\\", "/", -1)
@@ -37,15 +47,10 @@ func newTarHeader(path string, datalen int64, mode int64) *tar.Header {
 	return h
 }
 
-type TarGzWriter struct {
-	Fw io.WriteCloser
-	Tw *tar.Writer
-	Gw *gzip.Writer
-}
-
-func (tgzw *TarGzWriter) Open(archiveFilename string) error {
+// creates the file on disk, and wraps the os.File with a Tar writer and Gzip writer
+func (tgzw *TarGzWriter) Create() error {
 	var err error
-	tgzw.Fw, err = os.Create(archiveFilename)
+	tgzw.Fw, err = os.Create(tgzw.Filename)
 	if err != nil {
 		return err
 	}
@@ -56,6 +61,7 @@ func (tgzw *TarGzWriter) Open(archiveFilename string) error {
 	return nil
 }
 
+// Closes all 3 writers
 func (tgzw *TarGzWriter) Close() error {
 	err1 := tgzw.Tw.Close()
 	err2 := tgzw.Gw.Close()
@@ -71,6 +77,7 @@ func (tgzw *TarGzWriter) Close() error {
 	return err3
 }
 
+// add a file from the file system
 func (tgzw *TarGzWriter) AddFile(sourceFile, destName string) error {
 	fi, err := os.Open(sourceFile)
 	if err != nil {
@@ -80,7 +87,7 @@ func (tgzw *TarGzWriter) AddFile(sourceFile, destName string) error {
 	if err != nil {
 		return err
 	}
-	err = tgzw.Tw.WriteHeader(newTarHeader(destName, finf.Size(), int64(finf.Mode())))
+	err = tgzw.Tw.WriteHeader(NewTarHeader(destName, finf.Size(), int64(finf.Mode())))
 	if err != nil {
 		return err
 	}
@@ -91,8 +98,9 @@ func (tgzw *TarGzWriter) AddFile(sourceFile, destName string) error {
 	return nil
 }
 
+// add a file by bytes
 func (tgzw *TarGzWriter) AddBytes(bytes []byte, destName string, mode int64) error {
-	err := tgzw.Tw.WriteHeader(newTarHeader(destName, int64(len(bytes)), mode))
+	err := tgzw.Tw.WriteHeader(NewTarHeader(destName, int64(len(bytes)), mode))
 	if err != nil {
 		return err
 	}
@@ -103,8 +111,8 @@ func (tgzw *TarGzWriter) AddBytes(bytes []byte, destName string, mode int64) err
 	return nil
 }
 func NewTarGzWriter(archiveFilename string) (*TarGzWriter, error) {
-	tgzw := &TarGzWriter{}
-	err := tgzw.Open(archiveFilename)
+	tgzw := &TarGzWriter{Filename: archiveFilename}
+	err := tgzw.Create()
 	return tgzw, err
 }
 
