@@ -1,5 +1,3 @@
-package deb
-
 /*
    Copyright 2013 Am Laher
 
@@ -16,65 +14,134 @@ package deb
    limitations under the License.
 */
 
+package deb
+
 import (
 	"fmt"
-	"github.com/laher/goxc/archive"
-	"github.com/laher/goxc/core"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 	//"text/template"
 )
 
-//TODO: unfinished: need to discover root dir to determine which dirs to pre-make.
-func SdebGetSourcesAsArchiveItems(codeDir, prefix string) ([]archive.ArchiveItem, error) {
-	goPathRoot := core.GetGoPathElement(codeDir)
+
+// Tries to find the most relevant GOPATH element.
+// First, tries to find an element which is a parent of the current directory.
+// If not, it uses the first one.
+func getGoPathElement(workingDirectory string) string {
+	var gopath string
+	gopathVar := os.Getenv("GOPATH")
+	if gopathVar == "" {
+		log.Printf("GOPATH env variable not set! Using '.'")
+		gopath = "."
+	} else {
+		gopaths := filepath.SplitList(gopathVar)
+		validGopaths := []string{}
+		workingDirectoryAbs, err := filepath.Abs(workingDirectory)
+		if err != nil {
+			//strange. TODO: investigate
+			workingDirectoryAbs = workingDirectory
+		}
+		//see if you can match the workingDirectory
+		for _, gopathi := range gopaths {
+			//if empty or GOROOT, continue
+			//logic taken from http://tip.golang.org/src/pkg/go/build/build.go
+			if gopathi == "" || gopathi == runtime.GOROOT() || strings.HasPrefix(gopathi, "~") {
+				continue
+			} else {
+				validGopaths = append(validGopaths, gopathi)
+			}
+			gopathAbs, err := filepath.Abs(gopathi)
+			if err != nil {
+				//strange. TODO: investigate
+				gopathAbs = gopathi
+			}
+			//working directory is inside this path element. Use it!
+			if strings.HasPrefix(workingDirectoryAbs, gopathAbs) {
+				return gopathi
+			}
+		}
+		if len(validGopaths) > 0 {
+			gopath = validGopaths[0]
+
+		} else {
+			log.Printf("GOPATH env variable not valid! Using '.'")
+			gopath = "."
+		}
+	}
+	return gopath
+}
+
+
+// TODO: unfinished: need to discover root dir to determine which dirs to pre-make.
+func SdebAddSources(codeDir, prefix string, tgzw *TarGzWriter) error {
+	goPathRoot := getGoPathElement(codeDir)
 	goPathRootResolved, err := filepath.EvalSymlinks(goPathRoot)
 	if err != nil {
 		log.Printf("Could not evaluate symlinks for '%s'", goPathRoot)
 		goPathRootResolved = goPathRoot
 	}
 	log.Printf("Code dir '%s' (using goPath element '%s')", codeDir, goPathRootResolved)
-	return sdebGetSourcesAsArchiveItems(goPathRootResolved, codeDir, prefix)
+	return sdebAddSources(goPathRootResolved, codeDir, prefix, tgzw)
 }
 
-//
-func sdebGetSourcesAsArchiveItems(goPathRoot, codeDir, prefix string) ([]archive.ArchiveItem, error) {
-	sources := []archive.ArchiveItem{}
+// Get sources and append them
+func sdebAddSources(goPathRoot, codeDir, prefix string, tgzw *TarGzWriter) error {
 	//1. Glob for files in this dir
 	//log.Printf("Globbing %s", codeDir)
 	matches, err := filepath.Glob(filepath.Join(codeDir, "*.go"))
 	if err != nil {
-		return sources, err
+		return err
 	}
 	for _, match := range matches {
 		absMatch, err := filepath.Abs(match)
 		if err != nil {
-			return nil, fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
+			return fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
 		}
 		relativeMatch, err := filepath.Rel(goPathRoot, absMatch)
 		if err != nil {
-			return nil, fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
+			return fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
 		}
 		destName := filepath.Join(prefix, relativeMatch)
+		err = tgzw.AddFile(match, destName)
+		if err != nil {
+			return fmt.Errorf("Error adding go sources (match %s): %v,", match, err)
+		}
+		/*
 		//log.Printf("Putting file %s in %s", match, destName)
+		finf, err := os.Stat(destName)
+		if err != nil {
+			return fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
+		}
+		tgzw.Tw.WriteHeader(newTarHeader(destName, int64(finf.Size()), 0644))
+		if err != nil {
+			return err
+		}
+		_, err = tgzw.Tw.Write(controlContent)
+		if err != nil {
+			return err
+		}
+
 		sources = append(sources, archive.ArchiveItemFromFileSystem(match, destName))
+		*/
 	}
 
 	//2. Recurse into subdirs
 	fis, err := ioutil.ReadDir(codeDir)
 	for _, fi := range fis {
 		if fi.IsDir() && fi.Name() != DIRNAME_TEMP {
-			additionalItems, err := sdebGetSourcesAsArchiveItems(goPathRoot, filepath.Join(codeDir, fi.Name()), prefix)
-			sources = append(sources, additionalItems...)
+			err := sdebAddSources(goPathRoot, filepath.Join(codeDir, fi.Name()), prefix, tgzw)
+			//sources = append(sources, additionalItems...)
 			if err != nil {
-				return sources, err
+				return err
 			}
 		}
 	}
-	return sources, err
+	return err
 }
 
 func SdebCopySourceRecurse(codeDir, destDir string) (err error) {

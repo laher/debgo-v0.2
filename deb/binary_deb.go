@@ -1,3 +1,19 @@
+/*
+   Copyright 2013 Am Laher
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package deb
 
 import (
@@ -9,13 +25,12 @@ import (
 )
 
 type BinaryDeb struct {
-	Filename string
-	TmpDir string
+	Filename            string
+	TmpDir              string
 	DebianBinaryVersion string
-	ControlArchFile string
-	DataArchFile string
+	ControlArchFile     string
+	DataArchFile        string
 }
-
 
 func (bdeb *BinaryDeb) GetReader() (*ar.Reader, error) {
 	fi, err := os.Open(bdeb.Filename)
@@ -74,13 +89,13 @@ func NewBinaryDeb(filename string, tmpDir string) *BinaryDeb {
 }
 
 func (bdeb *BinaryDeb) SetDefaults() {
-	bdeb.DebianBinaryVersion = "2.0"
-	bdeb.ControlArchFile =filepath.Join(bdeb.TmpDir,"control.tar.gz")
-	bdeb.DataArchFile =filepath.Join(bdeb.TmpDir,"data.tar.gz")
+	bdeb.DebianBinaryVersion = DEBIAN_BINARY_VERSION_DEFAULT
+	bdeb.ControlArchFile = filepath.Join(bdeb.TmpDir, "control.tar.gz")
+	bdeb.DataArchFile = filepath.Join(bdeb.TmpDir, "data.tar.gz")
 }
 
 func (bdeb *BinaryDeb) WriteBytes(aw *ar.Writer, filename string, bytes []byte) error {
-	hdr := &ar.Header {
+	hdr := &ar.Header{
 		Name: filename,
 		Size: int64(len(bytes))}
 	if err := aw.WriteHeader(hdr); err != nil {
@@ -132,7 +147,7 @@ func (bdeb *BinaryDeb) WriteAll() error {
 	aw := ar.NewWriter(wtr)
 
 	log.Printf("Writing debian-binary")
-	err = bdeb.WriteBytes(aw, "debian-binary", []byte(bdeb.DebianBinaryVersion + "\n"))
+	err = bdeb.WriteBytes(aw, "debian-binary", []byte(bdeb.DebianBinaryVersion+"\n"))
 	if err != nil {
 		return err
 	}

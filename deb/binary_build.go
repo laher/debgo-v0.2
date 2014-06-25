@@ -1,5 +1,3 @@
-package deb
-
 /*
    Copyright 2013 Am Laher
 
@@ -16,19 +14,14 @@ package deb
    limitations under the License.
 */
 
+package deb
+
 import (
 	"fmt"
-	"archive/tar"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
-	"time"
-	"compress/gzip"
 )
-
-
 
 func (pkg *DebPackage) getControlFileContent(arch string) []byte {
 	control := fmt.Sprintf("Package: %s\nPriority: Extra\n", pkg.Name)
@@ -58,6 +51,7 @@ func getDebArch(destArch string, armArchName string) string {
 	}
 	return architecture
 }
+
 /*
 func getArmArchName(settings *config.Settings) string {
 	armArchName := settings.GetTaskSettingString(TASK_PKG_BUILD, "armarch")
@@ -85,7 +79,7 @@ func debBuild(dest platforms.Platform, tp TaskParams) (err error) {
 
 func resolveArches(arches string) ([]string, error) {
 	if arches == "any" || arches == "" {
-		return []string{ "i386", "armel", "amd64" }, nil
+		return []string{"i386", "armel", "amd64"}, nil
 	}
 	return []string{arches}, nil
 }
@@ -114,11 +108,27 @@ func (pkg *DebPackage) Build(arch string) error {
 	if err != nil {
 		return err
 	}
-	err = pkg.BuildControlArchive(arch)
+	tgzw, err := pkg.BuildControlArchive(arch)
 	if err != nil {
 		return err
 	}
-	err = pkg.BuildDataArchive(arch)
+	if pkg.IsVerbose {
+		log.Printf("Wrote control archive")
+	}
+
+	err = tgzw.Close()
+	if err != nil {
+		return err
+	}
+	if pkg.IsVerbose {
+		log.Printf("Closed control archive")
+	}
+
+	tgzw, err = pkg.BuildDataArchive(arch)
+	if err != nil {
+		return err
+	}
+	err = tgzw.Close()
 	if err != nil {
 		return err
 	}
@@ -128,144 +138,124 @@ func (pkg *DebPackage) Build(arch string) error {
 	}
 	return err
 }
-
-func newTarHeader(path string, datalen int64, mode int64) *tar.Header {
-	h := new(tar.Header)
-	//backslash-only paths
-	h.Name = strings.Replace(path, "\\", "/", -1)
-	h.Size = datalen
-	h.Mode = mode
-	h.ModTime = time.Now()
-	return h
-}
-
-func (pkg *DebPackage) BuildControlArchive(arch string) error {
+func (pkg *DebPackage) BuildControlArchive(arch string) (*TarGzWriter, error) {
 	archiveFilename := filepath.Join(pkg.TmpDir, "control.tar.gz")
-	fw, err := os.Create(archiveFilename)
+	tgzw, err := NewTarGzWriter(archiveFilename)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer fw.Close()
-
-	// gzip write
-	gw := gzip.NewWriter(fw)
-	defer gw.Close()
-
-	// tar write
-	tw := tar.NewWriter(gw)
-	defer tw.Close()
-
 	controlContent := pkg.getControlFileContent(arch)
 	if pkg.IsVerbose {
 		log.Printf("Control file:\n%s", string(controlContent))
 	}
-	err = tw.WriteHeader(newTarHeader("control", int64(len(controlContent)), 0644))
+	err = tgzw.Tw.WriteHeader(newTarHeader("control", int64(len(controlContent)), 0644))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	_, err = tw.Write(controlContent)
+	_, err = tgzw.Tw.Write(controlContent)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if pkg.Postinst != nil {
 		pi, err := toBytes(pkg.Postinst)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		err = tw.WriteHeader(newTarHeader("postinst", int64(len(pi)), 0755))
+		err = tgzw.Tw.WriteHeader(newTarHeader("postinst", int64(len(pi)), 0755))
 		if err != nil {
-			return err
+			return nil, err
 		}
-		_, err = tw.Write(pi)
+		_, err = tgzw.Tw.Write(pi)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	/*
-	err = ioutil.WriteFile(filepath.Join(pkg.TmpDir, "control"), controlContent, 0644)
-	if err != nil {
-		return err
-	}
-	controlFiles := []archive.ArchiveItem{archive.ArchiveItem{FileSystemPath: filepath.Join(pkg.TmpDir, "control"), ArchivePath: "control"}}
-	barr, err := toBytes(pkg.Postinst)
-	if err != nil {
-		return err
-	}
-	if barr != nil {
-		controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr, ArchivePath: "postinst"})
-	}
-
-	barr2, err := toBytes(pkg.Preinst)
-	if err != nil {
-		return err
-	}
-	if barr2 != nil {
-		controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr2, ArchivePath: "preinst"})
-	}
-
-	barr3, err := toBytes(pkg.Postrm)
-	if err != nil {
-		return err
-	}
-	if barr3 != nil {
-		controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr3, ArchivePath: "postrm"})
-	}
-
-	barr4, err := toBytes(pkg.Prerm)
-	if err != nil {
-		return err
-	}
-	if barr4 != nil {
-		controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr4, ArchivePath: "prerm"})
-	}
-
-	err = archive.TarGz(filepath.Join(pkg.TmpDir, "control.tar.gz"), controlFiles)
-	if err != nil {
-		return err
-	}
-	*/
-	return tw.Close()
-}
-
-func (pkg *DebPackage) BuildDataArchive(arch string) error {
-	archiveFilename := filepath.Join(pkg.TmpDir, "data.tar.gz")
-	fw, err := os.Create(archiveFilename)
-	if err != nil {
-		return err
-	}
-	defer fw.Close()
-
-	// gzip write
-	gw := gzip.NewWriter(fw)
-	defer gw.Close()
-
-	// tar write
-	tw := tar.NewWriter(gw)
-	defer tw.Close()
-
-	for _, executable := range pkg.ExecutablePaths {
-		exeName := "/usr/bin/" + filepath.Base(executable)
-		fi, err := os.Open(executable)
+		err = ioutil.WriteFile(filepath.Join(pkg.TmpDir, "control"), controlContent, 0644)
 		if err != nil {
 			return err
+		}
+		controlFiles := []archive.ArchiveItem{archive.ArchiveItem{FileSystemPath: filepath.Join(pkg.TmpDir, "control"), ArchivePath: "control"}}
+		barr, err := toBytes(pkg.Postinst)
+		if err != nil {
+			return err
+		}
+		if barr != nil {
+			controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr, ArchivePath: "postinst"})
+		}
+
+		barr2, err := toBytes(pkg.Preinst)
+		if err != nil {
+			return err
+		}
+		if barr2 != nil {
+			controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr2, ArchivePath: "preinst"})
+		}
+
+		barr3, err := toBytes(pkg.Postrm)
+		if err != nil {
+			return err
+		}
+		if barr3 != nil {
+			controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr3, ArchivePath: "postrm"})
+		}
+
+		barr4, err := toBytes(pkg.Prerm)
+		if err != nil {
+			return err
+		}
+		if barr4 != nil {
+			controlFiles = append(controlFiles, archive.ArchiveItem{Data: barr4, ArchivePath: "prerm"})
+		}
+
+		err = archive.TarGz(filepath.Join(pkg.TmpDir, "control.tar.gz"), controlFiles)
+		if err != nil {
+			return err
+		}
+	*/
+	return tgzw, err
+}
+
+func (pkg *DebPackage) BuildDataArchive(arch string) (*TarGzWriter, error) {
+	archiveFilename := filepath.Join(pkg.TmpDir, "data.tar.gz")
+
+	tgzw, err := NewTarGzWriter(archiveFilename)
+	if err != nil {
+		return nil, err
+	}
+	for _, executable := range pkg.ExecutablePaths {
+		exeName := "/usr/bin/" + filepath.Base(executable)
+		err = tgzw.AddFile(executable, exeName)
+		if err != nil {
+			tgzw.Close()
+			return nil, err
+		}
+		/*
+		fi, err := os.Open(executable)
+		if err != nil {
+			tgzw.Close()
+			return nil, err
 		}
 		finf, err := fi.Stat()
 		if err != nil {
-			return err
+			tgzw.Close()
+			return nil, err
 		}
-		err = tw.WriteHeader(newTarHeader(exeName, finf.Size(), int64(finf.Mode())))
+		err = tgzw.Tw.WriteHeader(newTarHeader(exeName, finf.Size(), int64(finf.Mode())))
 		if err != nil {
-			return err
+			tgzw.Close()
+			return nil, err
 		}
-		_, err = io.Copy(tw, fi)
+		_, err = io.Copy(tgzw.Tw, fi)
 		if err != nil {
-			return err
+			tgzw.Close()
+			return nil, err
 		}
+		*/
 
 	}
 	//TODO add resources to /usr/share/appName/
-	//err := archive.TarGz(filepath.Join(pkg.TmpDir, "data.tar.gz"), items)
-	return tw.Close()
+	return tgzw, err
 }
 
 func (pkg *DebPackage) BuildDebFile(arch string) error {

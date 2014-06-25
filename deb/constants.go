@@ -1,6 +1,7 @@
 package deb
 
 const (
+	DEBIAN_BINARY_VERSION_DEFAULT  = "2.0"
 	TEMPLATE_DEBIAN_COMPAT         = "9"
 	FORMAT_DEFAULT                 = "3.0 (quilt)"
 	TEMPLATE_DEBIAN_SOURCE_FORMAT  = FORMAT_DEFAULT

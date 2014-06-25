@@ -1,5 +1,3 @@
-package deb
-
 /*
    Copyright 2013 Am Laher
 
@@ -16,23 +14,19 @@ package deb
    limitations under the License.
 */
 
-/* Nearing completion */
-//TODO: various refinements ...
+package deb
+
 import (
 	"bytes"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
-	//Tip for Forkers: please 'clone' from my url and then 'pull' from your url. That way you wont need to change the import path.
-	//see https://groups.google.com/forum/?fromgroups=#!starred/golang-nuts/CY7o2aVNGZY
-	"github.com/laher/goxc/archive"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	//"strings"
 	"text/template"
 	"time"
 )
@@ -42,6 +36,7 @@ type Checksum struct {
 	Size     int64
 	File     string
 }
+
 type TemplateVars struct {
 	PackageName      string
 	PackageVersion   string
@@ -62,6 +57,7 @@ type TemplateVars struct {
 	ChecksumsSha1    []Checksum
 	ChecksumsSha256  []Checksum
 }
+
 /*
 //runs automatically
 func init() {
@@ -114,33 +110,34 @@ func checksums(path, name string) (*Checksum, *Checksum, *Checksum, error) {
 func (pkg *DebPackage) SourceBuild() error {
 	//default to just package <packagename>
 	arches := "all"
-	items, err := SdebGetSourcesAsArchiveItems(pkg.WorkingDir, pkg.Name+"-"+pkg.Version)
-	if err != nil {
-		return err
-	}
-	if err != nil {
-		return err
-	}
 
 	//build
 	//1. generate orig.tar.gz
-	err = os.MkdirAll(pkg.DestDir, 0777)
+	err := os.MkdirAll(pkg.DestDir, 0777)
 	if err != nil {
 		return err
 	}
-
-	//set up template
-	templateVars := getTemplateVars(pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Version, arches, pkg.Description, pkg.Metadata)
-
 	//TODO add/exclude resources to /usr/share
 	origTgzName := pkg.Name + "_" + pkg.Version + ".orig.tar.gz"
 	origTgzPath := filepath.Join(pkg.DestDir, origTgzName)
-	err = archive.TarGz(origTgzPath, items)
+	tgzw, err := NewTarGzWriter(origTgzPath)
+	if err != nil {
+		return err
+	}
+	err = SdebAddSources(pkg.WorkingDir, pkg.Name+"-"+pkg.Version, tgzw)
+	if err != nil {
+		return err
+	}
+	err = tgzw.Close()
 	if err != nil {
 		return err
 	}
 	log.Printf("Created %s", origTgzPath)
 
+
+
+	//set up template
+	templateVars := getTemplateVars(pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Version, arches, pkg.Description, pkg.Metadata)
 	checksumMd5, checksumSha1, checksumSha256, err := checksums(origTgzPath, origTgzName)
 	if err != nil {
 		return err
@@ -149,43 +146,77 @@ func (pkg *DebPackage) SourceBuild() error {
 	templateVars.ChecksumsSha1 = append(templateVars.ChecksumsSha1, *checksumSha1)
 	templateVars.ChecksumsSha256 = append(templateVars.ChecksumsSha256, *checksumSha256)
 
+
 	//2. generate .debian.tar.gz (just containing debian/ directory)
+
+	debTgzName := pkg.Name + "_" + pkg.Version + ".debian.tar.gz"
+	debTgzPath := filepath.Join(pkg.DestDir, debTgzName)
+	tgzw, err = NewTarGzWriter(debTgzPath)
 
 	//debian/control
 	controlData, err := getDebMetadataFileContent(filepath.Join(pkg.TemplateDir, "control.tpl"), TEMPLATE_SOURCEDEB_CONTROL, templateVars)
 	if err != nil {
 		return err
 	}
+	err = tgzw.AddBytes(controlData, "debian/control", int64(0644))
+	if err != nil {
+		return err
+	}
 
-	//compat
+	//debian/compat
 	compatData, err := getDebMetadataFileContent(filepath.Join(pkg.TemplateDir, "compat.tpl"), TEMPLATE_DEBIAN_COMPAT, templateVars)
 	if err != nil {
 		return err
 	}
+	err = tgzw.AddBytes(compatData, "debian/compat", int64(0644))
+	if err != nil {
+		return err
+	}
+
 
 	//debian/rules
 	rulesData, err := getDebMetadataFileContent(filepath.Join(pkg.TemplateDir, "rules.tpl"), TEMPLATE_DEBIAN_RULES, templateVars)
 	if err != nil {
 		return err
 	}
+	err = tgzw.AddBytes(rulesData, "debian/rules", int64(0644))
+	if err != nil {
+		return err
+	}
+
 
 	//debian/source/format
 	sourceFormatData, err := getDebMetadataFileContent(filepath.Join(pkg.TemplateDir, "source_format.tpl"), TEMPLATE_DEBIAN_SOURCE_FORMAT, templateVars)
 	if err != nil {
 		return err
 	}
+	err = tgzw.AddBytes(sourceFormatData, "debian/source/format", int64(0644))
+	if err != nil {
+		return err
+	}
+
 
 	//debian/source/options
 	sourceOptionsData, err := getDebMetadataFileContent(filepath.Join(pkg.TemplateDir, "source_options.tpl"), TEMPLATE_DEBIAN_SOURCE_OPTIONS, templateVars)
 	if err != nil {
 		return err
 	}
+	err = tgzw.AddBytes(sourceOptionsData, "debian/source/options", int64(0644))
+	if err != nil {
+		return err
+	}
 
-	//debian/rules
+
+	//debian/copyright
 	copyrightData, err := getDebMetadataFileContent(filepath.Join(pkg.TemplateDir, "copyright.tpl"), TEMPLATE_DEBIAN_COPYRIGHT, templateVars)
 	if err != nil {
 		return err
 	}
+	err = tgzw.AddBytes(copyrightData, "debian/copyright", int64(0644))
+	if err != nil {
+		return err
+	}
+
 
 	//debian/changelog (slightly different)
 	var changelogData []byte
@@ -200,25 +231,29 @@ func (pkg *DebPackage) SourceBuild() error {
 		}
 	}
 	/*
-	_, err = os.Stat(changelogFilename)
-	if os.IsNotExist(err) {
-		initialChangelogTemplate := TEMPLATE_CHANGELOG_HEADER + "\n\n" + TEMPLATE_CHANGELOG_INITIAL_ENTRY + "\n\n" + TEMPLATE_CHANGELOG_FOOTER
-		changelogData, err = getDebMetadataFileContent(filepath.Join(pkg.TemplateDir, "initial-changelog.tpl"), initialChangelogTemplate, templateVars)
-		if err != nil {
+		_, err = os.Stat(changelogFilename)
+		if os.IsNotExist(err) {
+			initialChangelogTemplate := TEMPLATE_CHANGELOG_HEADER + "\n\n" + TEMPLATE_CHANGELOG_INITIAL_ENTRY + "\n\n" + TEMPLATE_CHANGELOG_FOOTER
+			changelogData, err = getDebMetadataFileContent(filepath.Join(pkg.TemplateDir, "initial-changelog.tpl"), initialChangelogTemplate, templateVars)
+			if err != nil {
+				return err
+			}
+		} else if err != nil {
 			return err
+		} else {
+			changelogData, err = ioutil.ReadFile(changelogFilename)
+			if err != nil {
+				return err
+			}
 		}
-	} else if err != nil {
-		return err
-	} else {
-		changelogData, err = ioutil.ReadFile(changelogFilename)
-		if err != nil {
-			return err
-		}
-	}
 	*/
 	if len(changelogData) == 0 {
 		initialChangelogTemplate := TEMPLATE_CHANGELOG_HEADER + "\n\n" + TEMPLATE_CHANGELOG_INITIAL_ENTRY + "\n\n" + TEMPLATE_CHANGELOG_FOOTER
 		changelogData, err = getDebMetadataFileContent(filepath.Join(pkg.TemplateDir, "initial-changelog.tpl"), initialChangelogTemplate, templateVars)
+		if err != nil {
+			return err
+		}
+		err = tgzw.AddBytes(changelogData, "debian/changelog", int64(0644))
 		if err != nil {
 			return err
 		}
@@ -230,8 +265,13 @@ func (pkg *DebPackage) SourceBuild() error {
 	if err != nil {
 		return err
 	}
-	debTgzName := pkg.Name + "_" + pkg.Version + ".debian.tar.gz"
-	debTgzPath := filepath.Join(pkg.DestDir, debTgzName)
+	err = tgzw.AddBytes(readmeData, "debian/README.debian", int64(0644))
+	if err != nil {
+		return err
+	}
+
+
+	/*
 	err = archive.TarGz(debTgzPath,
 		[]archive.ArchiveItem{
 			archive.ArchiveItemFromBytes(changelogData, "debian/changelog"),
@@ -245,8 +285,16 @@ func (pkg *DebPackage) SourceBuild() error {
 	if err != nil {
 		return err
 	}
+	*/
+
+	err = tgzw.Close()
+	if err != nil {
+		return err
+	}
 	log.Printf("Created %s", debTgzPath)
 
+
+	//3. Create dsc file
 	checksumMd5, checksumSha1, checksumSha256, err = checksums(debTgzPath, debTgzName)
 	if err != nil {
 		return err
@@ -259,7 +307,6 @@ func (pkg *DebPackage) SourceBuild() error {
 	if err != nil {
 		return err
 	}
-	//3. generate .dsc file
 	dscPath := filepath.Join(pkg.DestDir, pkg.Name+"_"+pkg.Version+".dsc")
 	err = ioutil.WriteFile(dscPath, dscData, 0644)
 	if err == nil {
