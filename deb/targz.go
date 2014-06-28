@@ -20,21 +20,18 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"io"
-	"strings"
-	"os"
-	"time"
 	"log"
+	"os"
+	"strings"
+	"time"
 )
-
-
-
 
 // TarGzWriter encapsulates the tar, gz and file operations of a TarGz file
 type TarGzWriter struct {
-	Filename string // Filename
-	Fw io.WriteCloser // File writer
-	Tw *tar.Writer // Tar writer (wraps the io.writer)
-	Gw *gzip.Writer // Gzip writer (wraps the tar writer)
+	Filename string         // Filename
+	Fw       io.WriteCloser // File writer
+	Tw       *tar.Writer    // Tar writer (wraps the io.writer)
+	Gw       *gzip.Writer   // Gzip writer (wraps the tar writer)
 }
 
 func NewTarHeader(path string, datalen int64, mode int64) *tar.Header {
@@ -115,4 +112,3 @@ func NewTarGzWriter(archiveFilename string) (*TarGzWriter, error) {
 	err := tgzw.Create()
 	return tgzw, err
 }
-

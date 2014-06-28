@@ -56,7 +56,6 @@ Architecture: {{.Architecture}}
 {{end}}Description: {{.Description}}
 `
 
-
 	TEMPLATE_SOURCEDEB_CONTROL = `Source: {{.PackageName}}
 Build-Depends: {{.BuildDepends}}
 Priority: {{.Priority}}
@@ -103,5 +102,6 @@ Files:{{range .Checksums.ChecksumsMd5}}
 	BUILD_DEPENDS_DEFAULT     = "debhelper (>= 9.1.0), golang-go"
 	STANDARDS_VERSION_DEFAULT = "3.9.4"
 	ARCHITECTURE_DEFAULT      = "any"
+
 //	DIRNAME_TEMP              = ".temp"
 )

@@ -26,28 +26,27 @@ type Package struct {
 	Maintainer      string
 	MaintainerEmail string
 
-	AdditionalControlData        map[string]string
+	AdditionalControlData map[string]string
 
 	Architecture string
 
-//	ExecutablePaths map[string][]string
-//	OtherFiles      map[string]string
+	//	ExecutablePaths map[string][]string
+	//	OtherFiles      map[string]string
 
 	IsVerbose bool
 
-	Depends      string
+	Depends string
 
 	//only required for sourcedebs
 	BuildDepends string
 
-
-	Priority string
+	Priority         string
 	StandardsVersion string
-	Section string
-	Format string
-	Status string
+	Section          string
+	Format           string
+	Status           string
 
-	TemplateDir  string
+	TemplateDir string
 
 	IsRmtemp   bool
 	TmpDir     string
@@ -71,12 +70,10 @@ func (pkg *Package) GetArches() ([]string, error) {
 	return arches, err
 }
 
-
 func (pkg *Package) NewTemplateData() TemplateData {
 	templateVars := newTemplateData(pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Version, pkg.Architecture, pkg.Description, pkg.Depends, pkg.BuildDepends, pkg.Priority, pkg.Status, pkg.StandardsVersion, pkg.Section, pkg.Format, pkg.AdditionalControlData)
 	return templateVars
 }
-
 
 // A factory for a Package. Name, Version and Maintainer are mandatory.
 func NewPackage(name, version, maintainer string) *Package {

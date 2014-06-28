@@ -30,18 +30,18 @@ import (
 
 type SourcePackage struct {
 	*Package
-	DscFilePath string
-	OrigFilePath string
+	DscFilePath    string
+	OrigFilePath   string
 	DebianFilePath string
 }
 
 func NewSourcePackage(pkg *Package) *SourcePackage {
 	dscPath := filepath.Join(pkg.DestDir, pkg.Name+"_"+pkg.Version+".dsc")
-	origFilePath := filepath.Join(pkg.DestDir, pkg.Name + "_" + pkg.Version + ".orig.tar.gz")
-	debianFilePath := filepath.Join(pkg.DestDir, pkg.Name + "_" + pkg.Version + ".debian.tar.gz")
+	origFilePath := filepath.Join(pkg.DestDir, pkg.Name+"_"+pkg.Version+".orig.tar.gz")
+	debianFilePath := filepath.Join(pkg.DestDir, pkg.Name+"_"+pkg.Version+".debian.tar.gz")
 	return &SourcePackage{Package: pkg,
-		DscFilePath: dscPath,
-		OrigFilePath: origFilePath,
+		DscFilePath:    dscPath,
+		OrigFilePath:   origFilePath,
 		DebianFilePath: debianFilePath}
 }
 
@@ -92,7 +92,6 @@ func getGoPathElement(workingDirectory string) string {
 	return gopath
 }
 
-
 // TODO: unfinished: need to discover root dir to determine which dirs to pre-make.
 func (pkg *SourcePackage) AddSources(codeDir, destinationPrefix string, tgzw *TarGzWriter) error {
 	goPathRoot := getGoPathElement(codeDir)
@@ -128,21 +127,21 @@ func (pkg *SourcePackage) addSources(goPathRoot, codeDir, destinationPrefix stri
 			return fmt.Errorf("Error adding go sources (match %s): %v,", match, err)
 		}
 		/*
-		//log.Printf("Putting file %s in %s", match, destName)
-		finf, err := os.Stat(destName)
-		if err != nil {
-			return fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
-		}
-		tgzw.Tw.WriteHeader(NewTarHeader(destName, int64(finf.Size()), 0644))
-		if err != nil {
-			return err
-		}
-		_, err = tgzw.Tw.Write(controlContent)
-		if err != nil {
-			return err
-		}
+			//log.Printf("Putting file %s in %s", match, destName)
+			finf, err := os.Stat(destName)
+			if err != nil {
+				return fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
+			}
+			tgzw.Tw.WriteHeader(NewTarHeader(destName, int64(finf.Size()), 0644))
+			if err != nil {
+				return err
+			}
+			_, err = tgzw.Tw.Write(controlContent)
+			if err != nil {
+				return err
+			}
 
-		sources = append(sources, archive.ArchiveItemFromFileSystem(match, destName))
+			sources = append(sources, archive.ArchiveItemFromFileSystem(match, destName))
 		*/
 	}
 
@@ -290,7 +289,6 @@ func (pkg *SourcePackage) BuildWithDefaults() error {
 	return err
 }
 
-
 func (pkg *SourcePackage) BuildOrigArchive() error {
 	//2. generate orig.tar.gz
 
@@ -310,7 +308,6 @@ func (pkg *SourcePackage) BuildOrigArchive() error {
 	log.Printf("Created %s", pkg.OrigFilePath)
 	return nil
 }
-
 
 func (pkg *SourcePackage) BuildDebianArchive() error {
 	//set up template
@@ -339,7 +336,6 @@ func (pkg *SourcePackage) BuildDebianArchive() error {
 		return err
 	}
 
-
 	//debian/rules
 	rulesData, err := ProcessTemplateFileOrString(filepath.Join(pkg.TemplateDir, "rules.tpl"), TEMPLATE_DEBIAN_RULES, templateVars)
 	if err != nil {
@@ -349,7 +345,6 @@ func (pkg *SourcePackage) BuildDebianArchive() error {
 	if err != nil {
 		return err
 	}
-
 
 	//debian/source/format
 	sourceFormatData, err := ProcessTemplateFileOrString(filepath.Join(pkg.TemplateDir, "source_format.tpl"), TEMPLATE_DEBIAN_SOURCE_FORMAT, templateVars)
@@ -361,7 +356,6 @@ func (pkg *SourcePackage) BuildDebianArchive() error {
 		return err
 	}
 
-
 	//debian/source/options
 	sourceOptionsData, err := ProcessTemplateFileOrString(filepath.Join(pkg.TemplateDir, "source_options.tpl"), TEMPLATE_DEBIAN_SOURCE_OPTIONS, templateVars)
 	if err != nil {
@@ -372,7 +366,6 @@ func (pkg *SourcePackage) BuildDebianArchive() error {
 		return err
 	}
 
-
 	//debian/copyright
 	copyrightData, err := ProcessTemplateFileOrString(filepath.Join(pkg.TemplateDir, "copyright.tpl"), TEMPLATE_DEBIAN_COPYRIGHT, templateVars)
 	if err != nil {
@@ -382,7 +375,6 @@ func (pkg *SourcePackage) BuildDebianArchive() error {
 	if err != nil {
 		return err
 	}
-
 
 	//debian/changelog
 	/*(slightly different)
@@ -397,7 +389,7 @@ func (pkg *SourcePackage) BuildDebianArchive() error {
 			return err
 		}
 	}
-	
+
 		_, err = os.Stat(changelogFilename)
 		if os.IsNotExist(err) {
 			initialChangelogTemplate := TEMPLATE_CHANGELOG_HEADER + "\n\n" + TEMPLATE_CHANGELOG_INITIAL_ENTRY + "\n\n" + TEMPLATE_CHANGELOG_FOOTER
@@ -438,7 +430,6 @@ func (pkg *SourcePackage) BuildDebianArchive() error {
 		return err
 	}
 
-
 	err = tgzw.Close()
 	if err != nil {
 		return err
@@ -446,8 +437,6 @@ func (pkg *SourcePackage) BuildDebianArchive() error {
 	log.Printf("Created %s", pkg.DebianFilePath)
 	return nil
 }
-
-
 
 func (pkg *SourcePackage) BuildDscFile() error {
 	//set up template
@@ -473,4 +462,3 @@ func (pkg *SourcePackage) BuildDscFile() error {
 	}
 	return err
 }
-

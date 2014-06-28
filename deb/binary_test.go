@@ -1,9 +1,9 @@
 package deb
 
 import (
-	"testing"
 	"os"
 	"path/filepath"
+	"testing"
 )
 
 func TestDebBuild(t *testing.T) {
@@ -14,9 +14,9 @@ func TestDebBuild(t *testing.T) {
 	pkg.IsVerbose = true
 
 	exesMap := map[string][]string{
-		"amd64" : []string{ "_test/a.amd64" },
-		"i386" : []string{ "_test/a.386" },
-		"armel" : []string{ "_test/a.arm" }}
+		"amd64": []string{"_test/a.amd64"},
+		"i386":  []string{"_test/a.386"},
+		"armel": []string{"_test/a.arm"}}
 	err := createExes(exesMap)
 	if err != nil {
 		t.Fatalf("%v", err)

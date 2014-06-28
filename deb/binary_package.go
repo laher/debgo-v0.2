@@ -26,12 +26,13 @@ import (
 type BinaryPackage struct {
 	*Package
 	ExecutablePaths map[string][]string
-	DebFiles map[string]*DebFile
+	DebFiles        map[string]*DebFile
 }
 
 func NewBinaryPackage(pkg *Package, executablePaths map[string][]string) *BinaryPackage {
 	return &BinaryPackage{Package: pkg, ExecutablePaths: executablePaths}
 }
+
 /*
 // Generates the control file content for a binary deb, for a given architecture
 func (pkg *BinaryPackage) GenerateControlFileContentForArch(arch string) []byte {
@@ -91,9 +92,7 @@ func debBuild(dest platforms.Platform, tp TaskParams) (err error) {
 }
 */
 
-
-
-//Builds debs for all arches. 
+//Builds debs for all arches.
 func (pkg *BinaryPackage) BuildAllWithDefaults() error {
 	arches, err := pkg.GetArches()
 	if err != nil {

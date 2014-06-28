@@ -36,29 +36,29 @@ type Checksum struct {
 }
 
 type Checksums struct {
-	ChecksumsMd5     []Checksum
-	ChecksumsSha1    []Checksum
-	ChecksumsSha256  []Checksum
+	ChecksumsMd5    []Checksum
+	ChecksumsSha1   []Checksum
+	ChecksumsSha256 []Checksum
 }
 
 type TemplateData struct {
-	PackageName      string
-	PackageVersion   string
-	BuildDepends     string
-	Priority         string
-	Maintainer       string
-	MaintainerEmail  string
-	StandardsVersion string
-	Architecture     string
-	Section          string
-	Depends          string
-	Description      string
-	Other            string
-	Status           string
-	EntryDate        string
-	Format           string
-	AdditionalControlData    map[string]string
-	Checksums	 *Checksums
+	PackageName           string
+	PackageVersion        string
+	BuildDepends          string
+	Priority              string
+	Maintainer            string
+	MaintainerEmail       string
+	StandardsVersion      string
+	Architecture          string
+	Section               string
+	Depends               string
+	Description           string
+	Other                 string
+	Status                string
+	EntryDate             string
+	Format                string
+	AdditionalControlData map[string]string
+	Checksums             *Checksums
 }
 
 func (cs *Checksums) Add(filepath, basename string) error {
@@ -110,6 +110,7 @@ func checksums(path, name string) (*Checksum, *Checksum, *Checksum, error) {
 	return &checksumMd5, &checksumSha1, &checksumSha256, nil
 
 }
+
 /*
 func getSdebControlFileContent(appName, maintainer, version, arches, description, buildDepends string, metadataDeb map[string]interface{}) []byte {
 	control := fmt.Sprintf("Source: %s\nPriority: extra\n", appName)
@@ -186,6 +187,7 @@ func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, 
 		nil}
 	return vars
 }
+
 /*
 func getSourceDebControlFileContent(appName, maintainer, version, arch, description string, metadataDeb map[string]interface{}) []byte {
 	control := fmt.Sprintf("Source: %s\nPriority: optional\n", appName)
