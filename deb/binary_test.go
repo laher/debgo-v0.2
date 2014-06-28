@@ -7,38 +7,48 @@ import (
 )
 
 func TestDebBuild(t *testing.T) {
-	exes := []string{"_test/a.b"}
-	err := createExes(exes)
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	pkg := NewPackage("testpkg", "0.0.2", "me", exes)
+
+	pkg := NewPackage("testpkg", "0.0.2", "me")
 	pkg.Description = "hiya"
 	pkg.IsRmtemp = false
 	pkg.IsVerbose = true
-	err = pkg.Build("amd64")
+
+	exesMap := map[string][]string{
+		"amd64" : []string{ "_test/a.amd64" },
+		"i386" : []string{ "_test/a.386" },
+		"armel" : []string{ "_test/a.arm" }}
+	err := createExes(exesMap)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	bpkg := NewBinaryPackage(pkg, exesMap)
+	err = bpkg.BuildAllWithDefaults()
+	//err = pkg.Build("amd64", exesMap["amd64"])
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
 }
 
-func createExes(exes []string) error {
-	for _, exe := range exes {
-		err := os.MkdirAll(filepath.Dir(exe), 0777)
-		if err != nil {
-			return err
-		}
-		fi, err := os.Create(exe)
-		if err != nil {
-			return err
-		}
-		_, err = fi.Write([]byte("echo 1"))
-		if err != nil {
-			return err
-		}
-		err = fi.Close()
-		if err != nil {
-			return err
+func createExes(exesMap map[string][]string) error {
+	for _, exes := range exesMap {
+		for _, exe := range exes {
+			err := os.MkdirAll(filepath.Dir(exe), 0777)
+			if err != nil {
+				return err
+			}
+			fi, err := os.Create(exe)
+			if err != nil {
+				return err
+			}
+			_, err = fi.Write([]byte("echo 1"))
+			if err != nil {
+				return err
+			}
+			err = fi.Close()
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

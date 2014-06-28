@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 )
 
-type BinaryDeb struct {
+type DebFile struct {
 	Filename            string
 	TmpDir              string
 	DebianBinaryVersion string
@@ -32,7 +32,7 @@ type BinaryDeb struct {
 	DataArchFile        string
 }
 
-func (bdeb *BinaryDeb) GetReader() (*ar.Reader, error) {
+func (bdeb *DebFile) GetReader() (*ar.Reader, error) {
 	fi, err := os.Open(bdeb.Filename)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (bdeb *BinaryDeb) GetReader() (*ar.Reader, error) {
 // ExtractAll extracts all contents from the Ar archive.
 // It returns a slice of all filenames.
 // In case of any error, it returns the error immediately
-func (bdeb *BinaryDeb) ExtractAll() ([]string, error) {
+func (bdeb *DebFile) ExtractAll() ([]string, error) {
 	arr, err := bdeb.GetReader()
 	if err != nil {
 		return nil, err
@@ -81,21 +81,21 @@ func (bdeb *BinaryDeb) ExtractAll() ([]string, error) {
 	return filenames, nil
 }
 
-func NewBinaryDeb(filename string, tmpDir string) *BinaryDeb {
-	bdeb := &BinaryDeb{}
+func NewDebFile(filename string, tmpDir string) *DebFile {
+	bdeb := &DebFile{}
 	bdeb.SetDefaults()
 	bdeb.Filename = filename
 	bdeb.TmpDir = tmpDir
 	return bdeb
 }
 
-func (bdeb *BinaryDeb) SetDefaults() {
+func (bdeb *DebFile) SetDefaults() {
 	bdeb.DebianBinaryVersion = DEBIAN_BINARY_VERSION_DEFAULT
 	bdeb.ControlArchFile = filepath.Join(bdeb.TmpDir, "control.tar.gz")
 	bdeb.DataArchFile = filepath.Join(bdeb.TmpDir, "data.tar.gz")
 }
 
-func (bdeb *BinaryDeb) WriteBytes(aw *ar.Writer, filename string, bytes []byte) error {
+func (bdeb *DebFile) WriteBytes(aw *ar.Writer, filename string, bytes []byte) error {
 	hdr := &ar.Header{
 		Name: filename,
 		Size: int64(len(bytes))}
@@ -108,7 +108,7 @@ func (bdeb *BinaryDeb) WriteBytes(aw *ar.Writer, filename string, bytes []byte) 
 	return nil
 }
 
-func (bdeb *BinaryDeb) WriteFromFile(aw *ar.Writer, filename string) error {
+func (bdeb *DebFile) WriteFromFile(aw *ar.Writer, filename string) error {
 	finf, err := os.Stat(filename)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func (bdeb *BinaryDeb) WriteFromFile(aw *ar.Writer, filename string) error {
 
 }
 
-func (bdeb *BinaryDeb) WriteAll() error {
+func (bdeb *DebFile) WriteAll() error {
 	log.Printf("Building deb %s", bdeb.Filename)
 	wtr, err := os.Create(bdeb.Filename)
 	if err != nil {

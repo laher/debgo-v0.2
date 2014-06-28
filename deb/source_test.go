@@ -1,27 +1,21 @@
 package deb
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 )
-
+/*
 func TestSdebCopy(t *testing.T) {
 	workingDirectory := "."
 	err := os.MkdirAll(workingDirectory, 0777)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	/* SdebPrepare is old now
-	err = SdebPrepare(workingDirectory, "my-app-x", "A L", "1.2.3-alpha", "platform-x", "This package does x", "", *new(map[string]interface{}))
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	*/
-	tmpDir := filepath.Join(workingDirectory, DIRNAME_TEMP)
+	tmpDir := filepath.Join(workingDirectory, ".")
 	destDir := filepath.Join(tmpDir, "src")
 	workingDirectory = "."
-	err = SdebCopySourceRecurse(workingDirectory, destDir)
+	pkg := NewPackage("a", "1", "me")
+	spkg := NewSourcePackage(pkg)
+	err = spkg.CopySourceRecurse(workingDirectory, destDir)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -29,12 +23,12 @@ func TestSdebCopy(t *testing.T) {
 	//ioutil.WriteFile(filepath.Join(debianDir, "control"), sdebControlFile, 0666)
 	//TODO: targz
 }
-
+*/
 func TestSdebBuild(t *testing.T) {
-	exes := []string{}
-	pkg := NewPackage("testpkg", "0.0.2", "me", exes)
+	pkg := NewPackage("testpkg", "0.0.2", "me")
 	pkg.Description = "hiya"
-	err := pkg.SourceBuild()
+	spkg := NewSourcePackage(pkg)
+	err := spkg.BuildWithDefaults()
 	if err != nil {
 		t.Fatalf("Error building source package: %v", err)
 	}

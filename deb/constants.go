@@ -4,6 +4,7 @@ const (
 	DEBIAN_BINARY_VERSION_DEFAULT  = "2.0"
 	TEMPLATE_DEBIAN_COMPAT         = "9"
 	FORMAT_DEFAULT                 = "3.0 (quilt)"
+	STATUS_DEFAULT                 = "unreleased"
 	TEMPLATE_DEBIAN_SOURCE_FORMAT  = FORMAT_DEFAULT
 	TEMPLATE_DEBIAN_SOURCE_OPTIONS = `tar-ignore = .hg
 tar-ignore = .git
@@ -67,11 +68,11 @@ Standards-Version: {{.StandardsVersion}}
 Build-Depends: {{.BuildDepends}}
 Priority: {{.Priority}}
 Section: {{.Section}}
-Checksums-Sha1:{{range .ChecksumsSha1}}
+Checksums-Sha1:{{range .Checksums.ChecksumsSha1}}
  {{.Checksum}} {{.Size}} {{.File}}{{end}}
-Checksums-Sha256:{{range .ChecksumsSha256}}
+Checksums-Sha256:{{range .Checksums.ChecksumsSha256}}
  {{.Checksum}} {{.Size}} {{.File}}{{end}}
-Files:{{range .Files}}
+Files:{{range .Checksums.ChecksumsMd5}}
  {{.Checksum}} {{.Size}} {{.File}}{{end}}
 {{.Other}}`
 
@@ -84,11 +85,11 @@ Files:{{range .Files}}
 
 `
 
-	STATUS_DEFAULT            = "unreleased"
 	SECTION_DEFAULT           = "devel" //TODO: correct to use this?
 	PRIORITY_DEFAULT          = "extra"
+	DEPENDS_DEFAULT           = ""
 	BUILD_DEPENDS_DEFAULT     = "debhelper (>= 9.1.0), golang-go"
 	STANDARDS_VERSION_DEFAULT = "3.9.4"
 	ARCHITECTURE_DEFAULT      = "any"
-	DIRNAME_TEMP              = ".temp"
+//	DIRNAME_TEMP              = ".temp"
 )
