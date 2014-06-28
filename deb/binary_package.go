@@ -32,7 +32,7 @@ type BinaryPackage struct {
 func NewBinaryPackage(pkg *Package, executablePaths map[string][]string) *BinaryPackage {
 	return &BinaryPackage{Package: pkg, ExecutablePaths: executablePaths}
 }
-
+/*
 // Generates the control file content for a binary deb, for a given architecture
 func (pkg *BinaryPackage) GenerateControlFileContentForArch(arch string) []byte {
 	control := fmt.Sprintf("Package: %s\nPriority: Extra\n", pkg.Name)
@@ -51,6 +51,7 @@ func (pkg *BinaryPackage) GenerateControlFileContentForArch(arch string) []byte 
 	control = fmt.Sprintf("%sDescription: %s\n", control, pkg.Description)
 	return []byte(control)
 }
+*/
 
 /*
 func getDebArch(destArch string, armArchName string) string {
@@ -167,11 +168,16 @@ func (pkg *BinaryPackage) BuildWithDefaults(arch string) error {
 }
 
 func (pkg *BinaryPackage) AddDefaultControlFile(arch string, tgzw *TarGzWriter) error {
-	controlContent := pkg.GenerateControlFileContentForArch(arch)
-	if pkg.IsVerbose {
-		log.Printf("Control file:\n%s", string(controlContent))
+	templateVars := pkg.NewTemplateData()
+	templateVars.Architecture = arch
+	controlData, err := ProcessTemplateFileOrString(filepath.Join(pkg.TemplateDir, "control.tpl"), TEMPLATE_BINARYDEB_CONTROL, templateVars)
+	if err != nil {
+		return err
 	}
-	err := tgzw.AddBytes(controlContent, "control", 0644)
+	if pkg.IsVerbose {
+		log.Printf("Control file:\n%s", string(controlData))
+	}
+	err = tgzw.AddBytes(controlData, "control", 0644)
 	if err != nil {
 		return err
 	}

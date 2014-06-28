@@ -45,6 +45,18 @@ binary-arch: clean
 
 binary: binary-arch`
 
+	TEMPLATE_BINARYDEB_CONTROL = `Package: {{.PackageName}}
+Priority: {{.Priority}}
+{{if .Maintainer}}Maintainer: {{.Maintainer}}
+{{end}}Section: {{.Section}}
+Version: {{.PackageVersion}}
+Architecture: {{.Architecture}}
+{{if .Depends}}Depends: {{.Depends}}
+{{end}}{{range $key, $value := .AdditionalControlData}}{{$key}}: {{$value}}
+{{end}}Description: {{.Description}}
+`
+
+
 	TEMPLATE_SOURCEDEB_CONTROL = `Source: {{.PackageName}}
 Build-Depends: {{.BuildDepends}}
 Priority: {{.Priority}}

@@ -265,11 +265,6 @@ func SdebPrepare(workingDirectory, appName, maintainer, version, arches, descrip
 }
 */
 
-func (pkg *SourcePackage) NewTemplateData() TemplateData {
-	templateVars := newTemplateData(pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Version, pkg.Architecture, pkg.Description, pkg.Depends, pkg.BuildDepends, pkg.Priority, pkg.Status, pkg.StandardsVersion, pkg.Section, pkg.Format, pkg.Metadata)
-	return templateVars
-}
-
 func (pkg *SourcePackage) BuildWithDefaults() error {
 	//build
 

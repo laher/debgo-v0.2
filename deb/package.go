@@ -26,8 +26,7 @@ type Package struct {
 	Maintainer      string
 	MaintainerEmail string
 
-	//this is used for the control file
-	Metadata        map[string]interface{}
+	AdditionalControlData        map[string]string
 
 	Architecture string
 
@@ -71,6 +70,13 @@ func (pkg *Package) GetArches() ([]string, error) {
 	arches, err := resolveArches(pkg.Architecture)
 	return arches, err
 }
+
+
+func (pkg *Package) NewTemplateData() TemplateData {
+	templateVars := newTemplateData(pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Version, pkg.Architecture, pkg.Description, pkg.Depends, pkg.BuildDepends, pkg.Priority, pkg.Status, pkg.StandardsVersion, pkg.Section, pkg.Format, pkg.AdditionalControlData)
+	return templateVars
+}
+
 
 // A factory for a Package. Name, Version and Maintainer are mandatory.
 func NewPackage(name, version, maintainer string) *Package {

@@ -57,6 +57,7 @@ type TemplateData struct {
 	Status           string
 	EntryDate        string
 	Format           string
+	AdditionalControlData    map[string]string
 	Checksums	 *Checksums
 }
 
@@ -164,7 +165,7 @@ func ProcessTemplateFileOrString(templateFile string, templateDefault string, va
 	return dest.Bytes(), nil
 }
 
-func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, arch, description, depends, buildDepends, priority, status, standardsVersion, section, format string, metadataDeb map[string]interface{}) TemplateData {
+func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, arch, description, depends, buildDepends, priority, status, standardsVersion, section, format string, metadataDeb map[string]string) TemplateData {
 	vars := TemplateData{
 		appName,
 		appVersion,
@@ -181,6 +182,7 @@ func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, 
 		status,
 		time.Now().Format("Mon, 2 Jan 2006 15:04:05 -0700"),
 		format,
+		metadataDeb,
 		nil}
 	return vars
 }
