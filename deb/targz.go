@@ -64,11 +64,11 @@ func (tgzw *TarGzWriter) Close() error {
 	err2 := tgzw.Gw.Close()
 	err3 := tgzw.Fw.Close()
 	if err1 != nil {
-		log.Printf("Error closing Tar Writer {}", err1)
+		log.Printf("Error closing Tar Writer %v", err1)
 		return err1
 	}
 	if err2 != nil {
-		log.Printf("Error closing Gzip Writer {}", err2)
+		log.Printf("Error closing Gzip Writer %v", err2)
 		return err2
 	}
 	return err3

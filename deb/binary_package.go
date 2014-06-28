@@ -33,65 +33,6 @@ func NewBinaryPackage(pkg *Package, executablePaths map[string][]string) *Binary
 	return &BinaryPackage{Package: pkg, ExecutablePaths: executablePaths}
 }
 
-/*
-// Generates the control file content for a binary deb, for a given architecture
-func (pkg *BinaryPackage) GenerateControlFileContentForArch(arch string) []byte {
-	control := fmt.Sprintf("Package: %s\nPriority: Extra\n", pkg.Name)
-	if pkg.Maintainer != "" {
-		control = fmt.Sprintf("%sMaintainer: %s\n", control, pkg.Maintainer)
-	}
-	//mandatory
-	control = fmt.Sprintf("%sVersion: %s\n", control, pkg.Version)
-
-	control = fmt.Sprintf("%sArchitecture: %s\n", control, arch)
-
-	// extra metadata ..
-	for k, v := range pkg.Metadata {
-		control = fmt.Sprintf("%s%s: %s\n", control, k, v)
-	}
-	control = fmt.Sprintf("%sDescription: %s\n", control, pkg.Description)
-	return []byte(control)
-}
-*/
-
-/*
-func getDebArch(destArch string, armArchName string) string {
-	architecture := "all"
-	switch destArch {
-	case "386":
-		architecture = "i386"
-	case "arm":
-		architecture = armArchName
-	case "amd64":
-		architecture = "amd64"
-	}
-	return architecture
-}
-
-func getArmArchName(settings *config.Settings) string {
-	armArchName := settings.GetTaskSettingString(TASK_PKG_BUILD, "armarch")
-	if armArchName == "" {
-		//derive it from GOARM version:
-		goArm := settings.GetTaskSettingString(TASK_XC, "GOARM")
-		if goArm == "5" {
-			armArchName = "armel"
-		} else {
-			armArchName = "armhf"
-		}
-	}
-	return armArchName
-}
-
-func debBuild(dest platforms.Platform, tp TaskParams) (err error) {
-	metadata := tp.Settings.GetTaskSettingMap(TASK_PKG_BUILD, "metadata")
-	armArchName := getArmArchName(tp.Settings)
-	metadataDeb := tp.Settings.GetTaskSettingMap(TASK_PKG_BUILD, "metadata-deb")
-	rmtemp := tp.Settings.GetTaskSettingBool(TASK_PKG_BUILD, "rmtemp")
-	debDir := filepath.Join(tp.OutDestRoot, tp.Settings.GetFullVersionName()) //v0.8.1 dont use platform dir
-	tmpDir := filepath.Join(debDir, ".goxc-temp")
-}
-*/
-
 //Builds debs for all arches.
 func (pkg *BinaryPackage) BuildAllWithDefaults() error {
 	arches, err := pkg.GetArches()
@@ -110,53 +51,20 @@ func (pkg *BinaryPackage) BuildAllWithDefaults() error {
 
 func (pkg *BinaryPackage) BuildWithDefaults(arch string) error {
 	log.Printf("Building for arch %s", arch)
+	pkg.Init()
 	//defer removal ...
 	if pkg.IsRmtemp {
 		defer os.RemoveAll(pkg.TmpDir)
 	}
-	//make tmpDir
-	err := os.MkdirAll(pkg.TmpDir, 0755)
+	controlArchiveFilename, err := pkg.BuildDefaultControlArchive(arch)
 	if err != nil {
 		return err
 	}
-	controlTgzw, err := pkg.InitControlArchive()
+	dataArchiveFilename, err := pkg.BuildDefaultDataArchive(arch)
 	if err != nil {
 		return err
 	}
-	err = pkg.AddDefaultControlFile(arch, controlTgzw)
-	if err != nil {
-		return err
-	}
-	if pkg.IsVerbose {
-		log.Printf("Wrote control file")
-	}
-	err = controlTgzw.Close()
-	if err != nil {
-		return err
-	}
-	if pkg.IsVerbose {
-		log.Printf("Closed control archive")
-	}
-
-	dataTgzw, err := pkg.InitDataArchive()
-	if err != nil {
-		return err
-	}
-	err = pkg.AddExecutablesByFilepath(pkg.ExecutablePaths[arch], dataTgzw)
-	if err != nil {
-		return err
-	}
-	if pkg.IsVerbose {
-		log.Printf("Added executables")
-	}
-	err = dataTgzw.Close()
-	if err != nil {
-		return err
-	}
-	if pkg.IsVerbose {
-		log.Printf("Closed data archive")
-	}
-	err = pkg.BuildDebFile(arch, controlTgzw.Filename, dataTgzw.Filename)
+	err = pkg.BuildDebFile(arch, controlArchiveFilename, dataArchiveFilename)
 	if err != nil {
 		return err
 	}
@@ -164,6 +72,52 @@ func (pkg *BinaryPackage) BuildWithDefaults(arch string) error {
 		log.Printf("Closed deb")
 	}
 	return err
+}
+
+func (pkg *BinaryPackage) BuildDefaultControlArchive(arch string) (string, error) {
+	controlTgzw, err := pkg.InitControlArchive()
+	if err != nil {
+		return "", err
+	}
+	err = pkg.AddDefaultControlFile(arch, controlTgzw)
+	if err != nil {
+		return "", err
+	}
+	if pkg.IsVerbose {
+		log.Printf("Wrote control file to control archive")
+	}
+	// This is where you'd include Postrm/Postinst etc
+
+	err = controlTgzw.Close()
+	if err != nil {
+		return "", err
+	}
+	if pkg.IsVerbose {
+		log.Printf("Closed control archive")
+	}
+	return controlTgzw.Filename, err
+}
+
+func (pkg *BinaryPackage) BuildDefaultDataArchive(arch string) (string, error) {
+	dataTgzw, err := pkg.InitDataArchive()
+	if err != nil {
+		return "", err
+	}
+	err = pkg.AddExecutablesByFilepath(pkg.ExecutablePaths[arch], dataTgzw)
+	if err != nil {
+		return "", err
+	}
+	if pkg.IsVerbose {
+		log.Printf("Added executables")
+	}
+	err = dataTgzw.Close()
+	if err != nil {
+		return "", err
+	}
+	if pkg.IsVerbose {
+		log.Printf("Closed data archive")
+	}
+	return dataTgzw.Filename, err
 }
 
 func (pkg *BinaryPackage) AddDefaultControlFile(arch string, tgzw *TarGzWriter) error {

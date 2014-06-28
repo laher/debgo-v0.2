@@ -16,7 +16,9 @@
 
 package deb
 
-import "fmt"
+import ("fmt"
+	"os"
+)
 
 // a package contains metadata only
 type Package struct {
@@ -68,6 +70,20 @@ func resolveArches(arches string) ([]string, error) {
 func (pkg *Package) GetArches() ([]string, error) {
 	arches, err := resolveArches(pkg.Architecture)
 	return arches, err
+}
+
+func (pkg *Package) Init() error {
+	//make tmpDir
+	err := os.MkdirAll(pkg.TmpDir, 0755)
+	if err != nil {
+		return err
+	}
+	//make destDir
+	err = os.MkdirAll(pkg.DestDir, 0755)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 func (pkg *Package) NewTemplateData() TemplateData {
