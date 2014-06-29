@@ -17,68 +17,77 @@
 package deb
 
 import ("fmt"
+	"errors"
 	"os"
 )
 
-// a package contains metadata only
+// *Package is the base unit for this library.
+// A *Package contains metadata and some information about building.
 type Package struct {
-	Name            string
-	Version         string
-	Description     string
-	Maintainer      string
-	MaintainerEmail string
+	Name            string // Package name
+	Version         string // Package version
+	Description     string // Description
+	Maintainer      string // Maintainer
+	MaintainerEmail string // Maintainer Email
 
-	AdditionalControlData map[string]string
+	AdditionalControlData map[string]string // Other key/values to go into the Control file.
 
-	Architecture string
+	Architecture string // Supported values: "all", "x386", "amd64", "armel"
 
-	//	ExecutablePaths map[string][]string
-	//	OtherFiles      map[string]string
+	Depends string // Depends
+	BuildDepends string // BuildDepends is only required for "sourcedebs".
 
-	IsVerbose bool
-
-	Depends string
-
-	//only required for sourcedebs
-	BuildDepends string
-
-	Priority         string
+	Priority         string 
 	StandardsVersion string
 	Section          string
 	Format           string
 	Status           string
 
-	TemplateDir string
+	// Properties below are mainly for build-related properties rather than metadata
 
-	IsRmtemp   bool
-	TmpDir     string
-	DestDir    string
-	WorkingDir string
+	IsVerbose bool // Whether to log debug information
+	TmpDir     string // Directory in-which to generate intermediate files & archives
+	IsRmtemp   bool // Delete tmp dir after execution?
+	DestDir    string // Where to generate .deb files and source debs (.dsc files etc)
+	WorkingDir string // This is the root from which to find .go files, templates, resources, etc
+
+	TemplateDir string // Optional. Only required if you're using templates
+	Resources map[string]string // Optional. Only if debgo packages your resources automatically. Key is the destination file. Value is the local file
 }
 
-func resolveArches(arches string) ([]string, error) {
+func resolveArches(arches string) ([]Architecture, error) {
 	if arches == "any" || arches == "" {
-		return []string{"i386", "armel", "amd64"}, nil
+		return []Architecture{Arch_i386, Arch_armel, Arch_amd64}, nil
+	} else if arches == string(Arch_i386) {
+		return []Architecture{Arch_i386}, nil
+	} else if arches == string(Arch_armel) {
+		return []Architecture{Arch_armel}, nil
+	} else if arches == string(Arch_amd64) {
+		return []Architecture{Arch_amd64}, nil
 	}
-	if arches != "i386" && arches != "armel" && arches != "amd64" {
-		return nil, fmt.Errorf("Architecture %s not supported", arches)
-	}
-	return []string{arches}, nil
+	return nil, fmt.Errorf("Architecture %s not supported", arches)
 }
 
 //Resolve architecture(s) and return as a slice
-func (pkg *Package) GetArches() ([]string, error) {
+func (pkg *Package) GetArches() ([]Architecture, error) {
 	arches, err := resolveArches(pkg.Architecture)
 	return arches, err
 }
 
+//Initialise build process (make Temp and Dest directories)
 func (pkg *Package) Init() error {
 	//make tmpDir
+	if pkg.TmpDir == "" {
+		return errors.New("Temp directory not specified")
+	}
 	err := os.MkdirAll(pkg.TmpDir, 0755)
 	if err != nil {
 		return err
 	}
 	//make destDir
+	if pkg.DestDir == "" {
+		return errors.New("Destination directory not specified")
+	}
 	err = os.MkdirAll(pkg.DestDir, 0755)
 	if err != nil {
 		return err
