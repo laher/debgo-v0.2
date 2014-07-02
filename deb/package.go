@@ -53,6 +53,8 @@ type Package struct {
 
 	TemplateDir string // Optional. Only required if you're using templates
 	Resources map[string]string // Optional. Only if debgo packages your resources automatically. Key is the destination file. Value is the local file
+
+	GoPathExtra []string
 }
 
 func resolveArches(arches string) ([]Architecture, error) {
@@ -96,7 +98,7 @@ func (pkg *Package) Init() error {
 }
 
 func (pkg *Package) NewTemplateData() TemplateData {
-	templateVars := newTemplateData(pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Version, pkg.Architecture, pkg.Description, pkg.Depends, pkg.BuildDepends, pkg.Priority, pkg.Status, pkg.StandardsVersion, pkg.Section, pkg.Format, pkg.AdditionalControlData)
+	templateVars := newTemplateData(pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Version, pkg.Architecture, pkg.Description, pkg.Depends, pkg.BuildDepends, pkg.Priority, pkg.Status, pkg.StandardsVersion, pkg.Section, pkg.Format, pkg.GoPathExtra, pkg.AdditionalControlData)
 	return templateVars
 }
 
@@ -107,10 +109,12 @@ func NewPackage(name, version, maintainer string) *Package {
 	pkg.Version = version
 	pkg.Maintainer = maintainer
 
-	pkg.TmpDir = "_test/tmp"
-	pkg.DestDir = "_test/dist"
+	pkg.TmpDir = TEMP_DIR_DEFAULT
+	pkg.DestDir = DIST_DIR_DEFAULT
 	pkg.IsRmtemp = true
-	pkg.WorkingDir = "."
+	pkg.WorkingDir = WORKING_DIR_DEFAULT
+
+	pkg.GoPathExtra = []string{GO_PATH_EXTRA_DEFAULT}
 
 	pkg.BuildDepends = BUILD_DEPENDS_DEFAULT
 	pkg.Priority = PRIORITY_DEFAULT

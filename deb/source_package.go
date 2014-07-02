@@ -23,9 +23,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strings"
-	//"text/template"
 )
 
 type SourcePackage struct {
@@ -45,53 +42,6 @@ func NewSourcePackage(pkg *Package) *SourcePackage {
 		DebianFilePath: debianFilePath}
 }
 
-// Tries to find the most relevant GOPATH element.
-// First, tries to find an element which is a parent of the current directory.
-// If not, it uses the first one.
-func getGoPathElement(workingDirectory string) string {
-	var gopath string
-	gopathVar := os.Getenv("GOPATH")
-	if gopathVar == "" {
-		log.Printf("GOPATH env variable not set! Using '.'")
-		gopath = "."
-	} else {
-		gopaths := filepath.SplitList(gopathVar)
-		validGopaths := []string{}
-		workingDirectoryAbs, err := filepath.Abs(workingDirectory)
-		if err != nil {
-			//strange. TODO: investigate
-			workingDirectoryAbs = workingDirectory
-		}
-		//see if you can match the workingDirectory
-		for _, gopathi := range gopaths {
-			//if empty or GOROOT, continue
-			//logic taken from http://tip.golang.org/src/pkg/go/build/build.go
-			if gopathi == "" || gopathi == runtime.GOROOT() || strings.HasPrefix(gopathi, "~") {
-				continue
-			} else {
-				validGopaths = append(validGopaths, gopathi)
-			}
-			gopathAbs, err := filepath.Abs(gopathi)
-			if err != nil {
-				//strange. TODO: investigate
-				gopathAbs = gopathi
-			}
-			//working directory is inside this path element. Use it!
-			if strings.HasPrefix(workingDirectoryAbs, gopathAbs) {
-				return gopathi
-			}
-		}
-		if len(validGopaths) > 0 {
-			gopath = validGopaths[0]
-
-		} else {
-			log.Printf("GOPATH env variable not valid! Using '.'")
-			gopath = "."
-		}
-	}
-	return gopath
-}
-
 // TODO: unfinished: need to discover root dir to determine which dirs to pre-make.
 func (pkg *SourcePackage) AddSources(codeDir, destinationPrefix string, tgzw *TarGzWriter) error {
 	goPathRoot := getGoPathElement(codeDir)
@@ -104,8 +54,23 @@ func (pkg *SourcePackage) AddSources(codeDir, destinationPrefix string, tgzw *Ta
 	return pkg.addSources(goPathRootResolved, codeDir, destinationPrefix, tgzw)
 }
 
+
+
 // Get sources and append them
 func (pkg *SourcePackage) addSources(goPathRoot, codeDir, destinationPrefix string, tgzw *TarGzWriter) error {
+	sources, err := globForSources(goPathRoot, codeDir, destinationPrefix, []string{pkg.TmpDir, pkg.DestDir})
+	if err != nil {
+		return err
+	}
+	for destName, match := range sources {
+		err = tgzw.AddFile(match, destName)
+		if err != nil {
+			return fmt.Errorf("Error adding go sources (match %s): %v,", match, err)
+		}
+
+	}
+	return nil
+	/*
 	//1. Glob for files in this dir
 	//log.Printf("Globbing %s", codeDir)
 	matches, err := filepath.Glob(filepath.Join(codeDir, "*.go"))
@@ -126,23 +91,6 @@ func (pkg *SourcePackage) addSources(goPathRoot, codeDir, destinationPrefix stri
 		if err != nil {
 			return fmt.Errorf("Error adding go sources (match %s): %v,", match, err)
 		}
-		/*
-			//log.Printf("Putting file %s in %s", match, destName)
-			finf, err := os.Stat(destName)
-			if err != nil {
-				return fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
-			}
-			tgzw.Tw.WriteHeader(NewTarHeader(destName, int64(finf.Size()), 0644))
-			if err != nil {
-				return err
-			}
-			_, err = tgzw.Tw.Write(controlContent)
-			if err != nil {
-				return err
-			}
-
-			sources = append(sources, archive.ArchiveItemFromFileSystem(match, destName))
-		*/
 	}
 
 	//2. Recurse into subdirs
@@ -157,6 +105,7 @@ func (pkg *SourcePackage) addSources(goPathRoot, codeDir, destinationPrefix stri
 		}
 	}
 	return err
+	*/
 }
 
 func (pkg *SourcePackage) CopySourceRecurse(codeDir, destDir string) (err error) {

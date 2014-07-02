@@ -38,27 +38,6 @@ type Checksums struct {
 	ChecksumsSha1   []Checksum
 	ChecksumsSha256 []Checksum
 }
-
-type TemplateData struct {
-	PackageName           string
-	PackageVersion        string
-	BuildDepends          string
-	Priority              string
-	Maintainer            string
-	MaintainerEmail       string
-	StandardsVersion      string
-	Architecture          string
-	Section               string
-	Depends               string
-	Description           string
-	Other                 string
-	Status                string
-	EntryDate             string
-	Format                string
-	AdditionalControlData map[string]string
-	Checksums             *Checksums
-}
-
 func (cs *Checksums) Add(filepath, basename string) error {
 	checksumMd5, checksumSha1, checksumSha256, err := checksums(filepath, basename)
 	if err != nil {

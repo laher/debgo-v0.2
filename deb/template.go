@@ -24,6 +24,29 @@ import (
 	"io/ioutil"
 )
 
+//Data for templates
+type TemplateData struct {
+	PackageName           string
+	PackageVersion        string
+	BuildDepends          string
+	Priority              string
+	Maintainer            string
+	MaintainerEmail       string
+	StandardsVersion      string
+	Architecture          string
+	Section               string
+	Depends               string
+	Description           string
+	Other                 string
+	Status                string
+	EntryDate             string
+	Format                string
+	GoPathExtra           []string
+	AdditionalControlData map[string]string
+	Checksums             *Checksums
+}
+
+
 func ProcessTemplateFileOrString(templateFile string, templateDefault string, vars interface{}) ([]byte, error) {
 	_, err := os.Stat(templateFile)
 	var tplText string
@@ -61,7 +84,7 @@ func ProcessTemplateString(tplText string, vars interface{}) ([]byte, error) {
 }
 
 
-func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, arch, description, depends, buildDepends, priority, status, standardsVersion, section, format string, metadataDeb map[string]string) TemplateData {
+func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, arch, description, depends, buildDepends, priority, status, standardsVersion, section, format string, gopathExtra []string, metadataDeb map[string]string) TemplateData {
 	vars := TemplateData{
 		appName,
 		appVersion,
@@ -78,6 +101,7 @@ func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, 
 		status,
 		time.Now().Format("Mon, 2 Jan 2006 15:04:05 -0700"),
 		format,
+		gopathExtra,
 		metadataDeb,
 		nil}
 	return vars

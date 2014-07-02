@@ -1,22 +1,23 @@
 package deb
 
 const (
-	DEBIAN_BINARY_VERSION_DEFAULT  = "2.0"
-	TEMPLATE_DEBIAN_COMPAT         = "9"
-	FORMAT_DEFAULT                 = "3.0 (quilt)"
-	STATUS_DEFAULT                 = "unreleased"
-	TEMPLATE_DEBIAN_SOURCE_FORMAT  = FORMAT_DEFAULT
+	DEBIAN_BINARY_VERSION_DEFAULT  = "2.0" // This is the current version as specified in .deb archives (filename debian-binary)
+	TEMPLATE_DEBIAN_COMPAT         = "9" // compatibility. Current version
+	FORMAT_DEFAULT                 = "3.0 (quilt)" // Format as in a .dsc file
+	STATUS_DEFAULT                 = "unreleased" // 
+	TEMPLATE_DEBIAN_SOURCE_FORMAT  = FORMAT_DEFAULT // Debian source formaat
 	TEMPLATE_DEBIAN_SOURCE_OPTIONS = `tar-ignore = .hg
 tar-ignore = .git
-tar-ignore = .bzr`
+tar-ignore = .bzr` //specifies files to ignore while building.
 
+	// The debian rules file describes how to build a 'source deb' into a binary deb. The default template here invokes debhelper scripts to automate this process for simple cases.
 	TEMPLATE_DEBIAN_RULES = `#!/usr/bin/make -f
 # -*- makefile -*-
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-export GOPATH=$(CURDIR)
+export GOPATH=$(CURDIR){{range $i, $gpe := .GoPathExtra }}:{{$gpe}}{{end}}
 
 PKGDIR=debian/{{.PackageName}}
 
@@ -25,16 +26,16 @@ PKGDIR=debian/{{.PackageName}}
 
 clean:
 	dh_clean
-	rm -rf $(GOPATH)/bin/* $(GOPATH)/pkg/*
-	#cd $(GOPATH)/src && find * -name '*.go' -exec dirname {} \; | xargs -n1 go clean
-	rm -f $(GOPATH)/goinstall.log
+	rm -rf $(CURDIR)/bin/* $(CURDIR)/pkg/*
+	#cd $(CURDIR)/src && find * -name '*.go' -exec dirname {} \; | xargs -n1 go clean
+	rm -f $(CURDIR)/goinstall.log
 
 binary-arch: clean
 	dh_prep
 	dh_installdirs
-	cd $(GOPATH)/src && find * -name '*.go' -exec dirname {} \; | xargs -n1 go install
+	cd $(CURDIR)/src && find * -name '*.go' -exec dirname {} \; | xargs -n1 go install
 	mkdir -p $(PKGDIR)/usr/bin
-	cp $(GOPATH)/bin/* $(PKGDIR)/usr/bin/
+	cp $(CURDIR)/bin/* $(PKGDIR)/usr/bin/
 	dh_strip
 	dh_compress
 	dh_fixperms
@@ -45,6 +46,7 @@ binary-arch: clean
 
 binary: binary-arch`
 
+	// The debian control file (binary debs) defines package metadata
 	TEMPLATE_BINARYDEB_CONTROL = `Package: {{.PackageName}}
 Priority: {{.Priority}}
 {{if .Maintainer}}Maintainer: {{.Maintainer}}
@@ -56,6 +58,7 @@ Architecture: {{.Architecture}}
 {{end}}Description: {{.Description}}
 `
 
+	// The debian control file (source debs) defines build metadata AND package metadata
 	TEMPLATE_SOURCEDEB_CONTROL = `Source: {{.PackageName}}
 Build-Depends: {{.BuildDepends}}
 Priority: {{.Priority}}
@@ -69,6 +72,7 @@ Depends: ${misc:Depends}{{.Depends}}
 Description: {{.Description}}
 {{.Other}}`
 
+	// The dsc file defines package metadata AND checksums
 	TEMPLATE_DEBIAN_DSC = `Format: {{.Format}}
 Source: {{.PackageName}}
 Binary: {{.PackageName}}
@@ -102,6 +106,9 @@ Files:{{range .Checksums.ChecksumsMd5}}
 	BUILD_DEPENDS_DEFAULT     = "debhelper (>= 9.1.0), golang-go"
 	STANDARDS_VERSION_DEFAULT = "3.9.4"
 	ARCHITECTURE_DEFAULT      = "any"
-
-//	DIRNAME_TEMP              = ".temp"
+	DEVDEB_GO_PATH_DEFAULT = "/usr/share/gocode" // This is used by existing -dev.deb packages e.g. golang-doozer-dev and golang-protobuf-dev
+	GO_PATH_EXTRA_DEFAULT = ":"+DEVDEB_GO_PATH_DEFAULT
+	TEMP_DIR_DEFAULT             = "_test/tmp"
+	DIST_DIR_DEFAULT             = "_test/dist"
+	WORKING_DIR_DEFAULT          = "."
 )
