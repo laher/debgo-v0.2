@@ -27,12 +27,13 @@ import (
 // This encapsulates a Package plus information about platform-specific debs and executables
 type BinaryPackage struct {
 	*Package
+	ExeDest string
 	Platforms	[]*Platform //Platform-specific builds
 }
 
 // Factory for BinaryPackage
 func NewBinaryPackage(pkg *Package) *BinaryPackage {
-	return &BinaryPackage{Package: pkg}
+	return &BinaryPackage{Package: pkg, ExeDest: "/usr/bin"}
 }
 
 // Builds debs for all arches.
@@ -181,9 +182,14 @@ func (pkg *BinaryPackage) InitDataArchive() (*TarGzWriter, error) {
 // Add executables from file system.
 // Be careful to make sure these are the relevant executables for the correct architecture
 func (pkg *BinaryPackage) AddExecutablesByFilepath(executablePaths []string, tgzw *TarGzWriter) error {
+	return pkg.AddFilesByFilepath(pkg.ExeDest, executablePaths, tgzw)
+}
+
+func (pkg *BinaryPackage) AddFilesByFilepath(destinationDir string, executablePaths []string, tgzw *TarGzWriter) error {
 	if executablePaths != nil {
 		for _, executable := range executablePaths {
-			exeName := "/usr/bin/" + filepath.Base(executable)
+
+			exeName := destinationDir + filepath.Base(executable)
 			err := tgzw.AddFile(executable, exeName)
 			if err != nil {
 				tgzw.Close()
@@ -210,6 +216,7 @@ func (pkg *BinaryPackage) AddResources(resources map[string]string, tgzw *TarGzW
 	return nil
 }
 
+//Initialise the generation parameters for a given architecture
 func (pkg *BinaryPackage) InitPlatform(arch Architecture) *Platform {
 	targetFile := filepath.Join(pkg.DestDir, fmt.Sprintf("%s_%s_%s.deb", pkg.Name, pkg.Version, arch)) //goxc_0.5.2_i386.deb")
 	if pkg.Platforms == nil {
@@ -223,6 +230,7 @@ func (pkg *BinaryPackage) InitPlatform(arch Architecture) *Platform {
 	return platform
 }
 
+//Initialise the generation parameters for a given architecture
 func (pkg *BinaryPackage) GetPlatform(arch Architecture) *Platform {
 	if pkg.Platforms == nil {
 		pkg.Platforms = []*Platform{}

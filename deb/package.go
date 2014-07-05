@@ -54,7 +54,7 @@ type Package struct {
 	TemplateDir string // Optional. Only required if you're using templates
 	Resources map[string]string // Optional. Only if debgo packages your resources automatically. Key is the destination file. Value is the local file
 
-	GoPathExtra []string
+	ExtraData map[string]interface{} // Optional for templates
 }
 
 func resolveArches(arches string) ([]Architecture, error) {
@@ -96,10 +96,46 @@ func (pkg *Package) Init() error {
 	}
 	return err
 }
-
+// initialize "template data" object
 func (pkg *Package) NewTemplateData() TemplateData {
-	templateVars := newTemplateData(pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Version, pkg.Architecture, pkg.Description, pkg.Depends, pkg.BuildDepends, pkg.Priority, pkg.Status, pkg.StandardsVersion, pkg.Section, pkg.Format, pkg.GoPathExtra, pkg.AdditionalControlData)
+	templateVars := TemplateData{pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Architecture,
+		pkg.Section,
+		pkg.Depends,
+		pkg.BuildDepends,
+		pkg.Priority,
+		pkg.Description,
+		pkg.StandardsVersion,
+		"",
+		pkg.Status,
+		"",
+		pkg.Format,
+		pkg.AdditionalControlData,
+		pkg.ExtraData,
+		nil}
 	return templateVars
+}
+
+func (pkg *Package) Validate() error {
+	if pkg.Name == "" {
+		return fmt.Errorf("Name property is required")
+	}
+	if pkg.Version == "" {
+		return fmt.Errorf("Version property is required")
+	}
+	if pkg.Maintainer == "" {
+		return fmt.Errorf("Maintainer property is required")
+	}
+	return nil
+}
+
+// A factory for a Go Package. Includes dependencies and Go Path information
+func NewGoPackage(name, version, maintainer string) *Package {
+	pkg := NewPackage(name, version, maintainer)
+	pkg.ExtraData = map[string]interface{}{
+		"GoPathExtra" : []string{GO_PATH_EXTRA_DEFAULT}}
+	pkg.BuildDepends = BUILD_DEPENDS_DEFAULT
+	pkg.Depends = DEPENDS_DEFAULT
+	return pkg
 }
 
 // A factory for a Package. Name, Version and Maintainer are mandatory.
@@ -113,15 +149,10 @@ func NewPackage(name, version, maintainer string) *Package {
 	pkg.DestDir = DIST_DIR_DEFAULT
 	pkg.IsRmtemp = true
 	pkg.WorkingDir = WORKING_DIR_DEFAULT
-
-	pkg.GoPathExtra = []string{GO_PATH_EXTRA_DEFAULT}
-
-	pkg.BuildDepends = BUILD_DEPENDS_DEFAULT
 	pkg.Priority = PRIORITY_DEFAULT
 	pkg.StandardsVersion = STANDARDS_VERSION_DEFAULT
 	pkg.Section = SECTION_DEFAULT
 	pkg.Format = FORMAT_DEFAULT
 	pkg.Status = STATUS_DEFAULT
-	pkg.Depends = DEPENDS_DEFAULT
 	return pkg
 }

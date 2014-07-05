@@ -60,7 +60,7 @@ func (ddpkg *DevDebPackage) BuildWithDefaults() error {
 		ddpkg.InitBinaryPackage()
 	}
 	goPathRoot := getGoPathElement(ddpkg.WorkingDir)
-	resources, err := globForSources(goPathRoot, ddpkg.WorkingDir, filepath.Join(ddpkg.DestinationGoPathElement, "src"), []string{ddpkg.TmpDir, ddpkg.DestDir})
+	resources, err := globForSources(goPathRoot, ddpkg.WorkingDir, ddpkg.DestinationGoPathElement, []string{ddpkg.TmpDir, ddpkg.DestDir})
 	if err != nil {
 		return err
 	}

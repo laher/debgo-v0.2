@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	name := "debgo"
+	name := "debgo-dsc"
 	log.SetPrefix("["+name+"] ")
 	//set to empty strings because they're being overridden
 	pkg := deb.NewGoPackage("","","")
@@ -17,10 +17,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	// TODO determine this platform
-	// TODO find executables for this platform
-	bpkg := deb.NewBinaryPackage(pkg)
-	err = bpkg.BuildAllWithDefaults()
+
+	ddpkg := deb.NewSourcePackage(pkg)
+	err = ddpkg.BuildWithDefaults()
 	if err != nil {
 		log.Fatalf("%v", err)
 	}

@@ -17,7 +17,7 @@ tar-ignore = .bzr` //specifies files to ignore while building.
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-export GOPATH=$(CURDIR){{range $i, $gpe := .GoPathExtra }}:{{$gpe}}{{end}}
+export GOPATH=$(CURDIR){{range $i, $gpe := .ExtraData.GoPathExtra }}:{{$gpe}}{{end}}
 
 PKGDIR=debian/{{.PackageName}}
 
