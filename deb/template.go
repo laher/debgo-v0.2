@@ -18,10 +18,10 @@ package deb
 
 import (
 	"bytes"
+	"io/ioutil"
 	"os"
 	"text/template"
 	"time"
-	"io/ioutil"
 )
 
 //Data for templates
@@ -45,7 +45,6 @@ type TemplateData struct {
 	ExtraData             map[string]interface{}
 	Checksums             *Checksums
 }
-
 
 func ProcessTemplateFileOrString(templateFile string, templateDefault string, vars interface{}) ([]byte, error) {
 	_, err := os.Stat(templateFile)
@@ -83,7 +82,6 @@ func ProcessTemplateString(tplText string, vars interface{}) ([]byte, error) {
 
 }
 
-
 func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, arch, description, depends, buildDepends, priority, status, standardsVersion, section, format string, extraData map[string]interface{}, metadataDeb map[string]string) TemplateData {
 	vars := TemplateData{
 		appName,
@@ -106,5 +104,3 @@ func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, 
 		nil}
 	return vars
 }
-
-

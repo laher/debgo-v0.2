@@ -23,14 +23,14 @@ func TestDebBuild(t *testing.T) {
 	}
 
 	bpkg := NewBinaryPackage(pkg)
-	platform64 := bpkg.InitPlatform(Arch_amd64)
-	platform64.Executables =  []string{"_test/a.amd64"}
-	platform386 := bpkg.InitPlatform(Arch_i386)
-	platform386.Executables =  []string{"_test/a.i386"}
-	platformArm := bpkg.InitPlatform(Arch_armel)
-	platformArm.Executables =  []string{"_test/a.armel"}
+	platform64 := bpkg.InitBinaryArtifact(Arch_amd64)
+	platform64.Executables = []string{"_test/a.amd64"}
+	platform386 := bpkg.InitBinaryArtifact(Arch_i386)
+	platform386.Executables = []string{"_test/a.i386"}
+	platformArm := bpkg.InitBinaryArtifact(Arch_armel)
+	platformArm.Executables = []string{"_test/a.armel"}
 
-	err = bpkg.BuildAllWithDefaults()
+	err = bpkg.Build()
 	//err = pkg.Build("amd64", exesMap["amd64"])
 	if err != nil {
 		t.Fatalf("%v", err)

@@ -1,11 +1,11 @@
 package deb
 
 const (
-	DEBIAN_BINARY_VERSION_DEFAULT  = "2.0" // This is the current version as specified in .deb archives (filename debian-binary)
-	TEMPLATE_DEBIAN_COMPAT         = "9" // compatibility. Current version
-	FORMAT_DEFAULT                 = "3.0 (quilt)" // Format as in a .dsc file
-	STATUS_DEFAULT                 = "unreleased" // 
-	TEMPLATE_DEBIAN_SOURCE_FORMAT  = FORMAT_DEFAULT // Debian source formaat
+	DEBIAN_BINARY_VERSION_DEFAULT  = "2.0"                                                  // This is the current version as specified in .deb archives (filename debian-binary)
+	TEMPLATE_DEBIAN_COMPAT         = "9"                                                    // compatibility. Current version
+	FORMAT_DEFAULT                 = "3.0 (quilt)"                                          // Format as in a .dsc file
+	STATUS_DEFAULT                 = "unreleased"                                           //
+	TEMPLATE_DEBIAN_SOURCE_FORMAT  = FORMAT_DEFAULT                                         // Debian source formaat
 	TEMPLATE_DEBIAN_SOURCE_OPTIONS = `tar-ignore = .hg
 tar-ignore = .git
 tar-ignore = .bzr` //specifies files to ignore while building.
@@ -106,9 +106,9 @@ Files:{{range .Checksums.ChecksumsMd5}}
 	BUILD_DEPENDS_DEFAULT     = "debhelper (>= 9.1.0), golang-go"
 	STANDARDS_VERSION_DEFAULT = "3.9.4"
 	ARCHITECTURE_DEFAULT      = "any"
-	DEVDEB_GO_PATH_DEFAULT = "/usr/share/gocode" // This is used by existing -dev.deb packages e.g. golang-doozer-dev and golang-protobuf-dev
-	GO_PATH_EXTRA_DEFAULT = ":"+DEVDEB_GO_PATH_DEFAULT
-	TEMP_DIR_DEFAULT             = "_test/tmp"
-	DIST_DIR_DEFAULT             = "_test/dist"
-	WORKING_DIR_DEFAULT          = "."
+	DEVDEB_GO_PATH_DEFAULT    = "/usr/share/gocode" // This is used by existing -dev.deb packages e.g. golang-doozer-dev and golang-protobuf-dev
+	GO_PATH_EXTRA_DEFAULT     = ":" + DEVDEB_GO_PATH_DEFAULT
+	TEMP_DIR_DEFAULT          = "_test/tmp"
+	DIST_DIR_DEFAULT          = "_test/dist"
+	WORKING_DIR_DEFAULT       = "."
 )

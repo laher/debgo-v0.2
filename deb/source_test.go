@@ -29,7 +29,7 @@ func TestSdebBuild(t *testing.T) {
 	pkg := NewPackage("testpkg", "0.0.2", "me")
 	pkg.Description = "hiya"
 	spkg := NewSourcePackage(pkg)
-	err := spkg.BuildWithDefaults()
+	err := spkg.Build()
 	if err != nil {
 		t.Fatalf("Error building source package: %v", err)
 	}

@@ -38,6 +38,7 @@ type Checksums struct {
 	ChecksumsSha1   []Checksum
 	ChecksumsSha256 []Checksum
 }
+
 func (cs *Checksums) Add(filepath, basename string) error {
 	checksumMd5, checksumSha1, checksumSha256, err := checksums(filepath, basename)
 	if err != nil {
@@ -87,4 +88,3 @@ func checksums(path, name string) (*Checksum, *Checksum, *Checksum, error) {
 	return &checksumMd5, &checksumSha1, &checksumSha256, nil
 
 }
-

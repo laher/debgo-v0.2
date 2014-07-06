@@ -7,14 +7,13 @@ import (
 )
 
 func main() {
-	name := "debgo-dev"
+	name := "debgo-dsc"
 	log.SetPrefix("[" + name + "] ")
 	//set to empty strings because they're being overridden
 	pkg := deb.NewGoPackage("", "", "")
 
 	fs := cmdutils.InitFlags(name, pkg)
 	fs.StringVar(&pkg.Architecture, "arch", "all", "Architectures [any,386,armel,amd64,all]")
-	ddpkg := deb.NewDevPackage(pkg)
 	var sourceDir string
 	var sourcesRelativeTo string
 	fs.StringVar(&sourceDir, "sources", ".", "source dir")
@@ -23,7 +22,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	err = ddpkg.Build()
+
+	spkg := deb.NewSourcePackage(pkg)
+	err = spkg.Build()
 	if err != nil {
 		log.Fatalf("%v", err)
 	}

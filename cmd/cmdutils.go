@@ -1,6 +1,5 @@
 package cmdutils
 
-
 import (
 	"flag"
 	"fmt"
@@ -16,9 +15,8 @@ func InitFlags(name string, pkg *deb.Package) *flag.FlagSet {
 	fs.StringVar(&pkg.Version, "version", "", "Package version")
 	fs.StringVar(&pkg.Maintainer, "maintainer", "", "Package maintainer")
 	fs.StringVar(&pkg.Description, "description", "", "Description")
-
-	pkg.IsRmtemp = false
-	pkg.IsVerbose = true
+	fs.BoolVar(&pkg.IsRmtemp, "rmtemp", false, "Remove 'temp' dirs")
+	fs.BoolVar(&pkg.IsVerbose, "verbose", false, "Show log messages")
 
 	return fs
 }
@@ -36,5 +34,3 @@ func ParseFlags(name string, pkg *deb.Package, fs *flag.FlagSet) error {
 	}
 	return err
 }
-
-

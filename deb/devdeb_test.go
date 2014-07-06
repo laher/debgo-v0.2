@@ -11,10 +11,9 @@ func TestDevDebBuild(t *testing.T) {
 	pkg.IsRmtemp = false
 	pkg.IsVerbose = true
 	ddpkg := NewDevPackage(pkg)
-	err := ddpkg.BuildWithDefaults()
+	err := ddpkg.Build()
 	//err = pkg.Build("amd64", exesMap["amd64"])
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
 }
-

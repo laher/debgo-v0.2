@@ -86,13 +86,14 @@ func getGoPathElement(workingDirectory string) string {
 }
 
 // Glob for Go sources.
-// This function looks for source files, and prepares their paths for 
+// This function looks for source files, and prepares their paths for
 func globForSources(goPathRoot, codeDir, destinationPrefix string, ignoreFiles []string) (map[string]string, error) {
 	goPathRootAbs, err := absAndResolveSymlinks(goPathRoot)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Globbing %s into %s relative to %s", codeDir, destinationPrefix, goPathRootAbs)
+	//	log.Printf("Globbing %s into %s relative to %s", codeDir, destinationPrefix, goPathRootAbs)
+
 	//1. Glob for files in this dir
 	//log.Printf("Globbing %s", codeDir)
 	matches, err := filepath.Glob(filepath.Join(codeDir, "*.go"))
@@ -116,7 +117,8 @@ func globForSources(goPathRoot, codeDir, destinationPrefix string, ignoreFiles [
 			if err != nil {
 				return nil, fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
 			}
-			log.Printf("Adding %s into %s / %s relative to %s", match, destinationPrefix, relativeMatch, goPathRootAbs)
+			//log.Printf("Adding %s into %s / %s relative to %s", match, destinationPrefix, relativeMatch, goPathRootAbs)
+
 			destName := filepath.Join(destinationPrefix, relativeMatch)
 			sources[destName] = match
 		}

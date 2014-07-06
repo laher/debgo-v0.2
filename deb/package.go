@@ -16,8 +16,9 @@
 
 package deb
 
-import ("fmt"
+import (
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -34,10 +35,10 @@ type Package struct {
 
 	Architecture string // Supported values: "all", "x386", "amd64", "armel"
 
-	Depends string // Depends
+	Depends      string // Depends
 	BuildDepends string // BuildDepends is only required for "sourcedebs".
 
-	Priority         string 
+	Priority         string
 	StandardsVersion string
 	Section          string
 	Format           string
@@ -45,29 +46,16 @@ type Package struct {
 
 	// Properties below are mainly for build-related properties rather than metadata
 
-	IsVerbose bool // Whether to log debug information
+	IsVerbose  bool   // Whether to log debug information
 	TmpDir     string // Directory in-which to generate intermediate files & archives
-	IsRmtemp   bool // Delete tmp dir after execution?
+	IsRmtemp   bool   // Delete tmp dir after execution?
 	DestDir    string // Where to generate .deb files and source debs (.dsc files etc)
 	WorkingDir string // This is the root from which to find .go files, templates, resources, etc
 
-	TemplateDir string // Optional. Only required if you're using templates
-	Resources map[string]string // Optional. Only if debgo packages your resources automatically. Key is the destination file. Value is the local file
+	TemplateDir string            // Optional. Only required if you're using templates
+	Resources   map[string]string // Optional. Only if debgo packages your resources automatically. Key is the destination file. Value is the local file
 
 	ExtraData map[string]interface{} // Optional for templates
-}
-
-func resolveArches(arches string) ([]Architecture, error) {
-	if arches == "any" || arches == "" {
-		return []Architecture{Arch_i386, Arch_armel, Arch_amd64}, nil
-	} else if arches == string(Arch_i386) {
-		return []Architecture{Arch_i386}, nil
-	} else if arches == string(Arch_armel) {
-		return []Architecture{Arch_armel}, nil
-	} else if arches == string(Arch_amd64) {
-		return []Architecture{Arch_amd64}, nil
-	}
-	return nil, fmt.Errorf("Architecture %s not supported", arches)
 }
 
 //Resolve architecture(s) and return as a slice
@@ -96,6 +84,7 @@ func (pkg *Package) Init() error {
 	}
 	return err
 }
+
 // initialize "template data" object
 func (pkg *Package) NewTemplateData() TemplateData {
 	templateVars := TemplateData{pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Architecture,
@@ -132,7 +121,7 @@ func (pkg *Package) Validate() error {
 func NewGoPackage(name, version, maintainer string) *Package {
 	pkg := NewPackage(name, version, maintainer)
 	pkg.ExtraData = map[string]interface{}{
-		"GoPathExtra" : []string{GO_PATH_EXTRA_DEFAULT}}
+		"GoPathExtra": []string{GO_PATH_EXTRA_DEFAULT}}
 	pkg.BuildDepends = BUILD_DEPENDS_DEFAULT
 	pkg.Depends = DEPENDS_DEFAULT
 	return pkg

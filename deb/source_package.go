@@ -25,23 +25,28 @@ import (
 	"path/filepath"
 )
 
+// Function type to allow customized build process
+type BuildSourcePackageFunc func(spkg *SourcePackage) error
+
 // The source package is a cross-platform package with a .dsc file.
 type SourcePackage struct {
 	*Package
 	DscFilePath    string
 	OrigFilePath   string
 	DebianFilePath string
+	BuildFunc      BuildSourcePackageFunc
 }
 
 // Factory for a source package. Sets up default paths..
 func NewSourcePackage(pkg *Package) *SourcePackage {
-	spkg := &SourcePackage{Package: pkg}
-	spkg.InitDefaults()
+	spkg := &SourcePackage{Package: pkg,
+		BuildFunc: BuildSourcePackageDefault}
+	spkg.InitDefaultFilenames()
 	return spkg
 }
 
 // Initialises default filenames, using .tar.gz as the archive type
-func (spkg *SourcePackage) InitDefaults() {
+func (spkg *SourcePackage) InitDefaultFilenames() {
 	spkg.DscFilePath = filepath.Join(spkg.DestDir, spkg.Name+"_"+spkg.Version+".dsc")
 	spkg.OrigFilePath = filepath.Join(spkg.DestDir, spkg.Name+"_"+spkg.Version+".orig.tar.gz")
 	spkg.DebianFilePath = filepath.Join(spkg.DestDir, spkg.Name+"_"+spkg.Version+".debian.tar.gz")
@@ -55,11 +60,11 @@ func (spkg *SourcePackage) AddSources(codeDir, destinationPrefix string, tgzw *T
 		log.Printf("Could not evaluate symlinks for '%s'", goPathRoot)
 		goPathRootResolved = goPathRoot
 	}
-	log.Printf("Code dir '%s' (using goPath element '%s')", codeDir, goPathRootResolved)
+	if spkg.IsVerbose {
+		log.Printf("Code dir '%s' (using goPath element '%s')", codeDir, goPathRootResolved)
+	}
 	return spkg.addSources(goPathRootResolved, codeDir, destinationPrefix, tgzw)
 }
-
-
 
 // Get sources and append them
 func (spkg *SourcePackage) addSources(goPathRoot, codeDir, destinationPrefix string, tgzw *TarGzWriter) error {
@@ -75,46 +80,12 @@ func (spkg *SourcePackage) addSources(goPathRoot, codeDir, destinationPrefix str
 
 	}
 	return nil
-	/*
-	//1. Glob for files in this dir
-	//log.Printf("Globbing %s", codeDir)
-	matches, err := filepath.Glob(filepath.Join(codeDir, "*.go"))
-	if err != nil {
-		return err
-	}
-	for _, match := range matches {
-		absMatch, err := filepath.Abs(match)
-		if err != nil {
-			return fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
-		}
-		relativeMatch, err := filepath.Rel(goPathRoot, absMatch)
-		if err != nil {
-			return fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
-		}
-		destName := filepath.Join(destinationPrefix, relativeMatch)
-		err = tgzw.AddFile(match, destName)
-		if err != nil {
-			return fmt.Errorf("Error adding go sources (match %s): %v,", match, err)
-		}
-	}
-
-	//2. Recurse into subdirs
-	fis, err := ioutil.ReadDir(codeDir)
-	for _, fi := range fis {
-		if fi.IsDir() && fi.Name() != spkg.TmpDir {
-			err := spkg.addSources(goPathRoot, filepath.Join(codeDir, fi.Name()), destinationPrefix, tgzw)
-			//sources = append(sources, additionalItems...)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return err
-	*/
 }
 
 func (spkg *SourcePackage) CopySourceRecurse(codeDir, destDir string) (err error) {
-	log.Printf("Globbing %s", codeDir)
+	if spkg.IsVerbose {
+		log.Printf("Globbing %s", codeDir)
+	}
 	//get all files and copy into destDir
 	matches, err := filepath.Glob(filepath.Join(codeDir, "*.go"))
 	if err != nil {
@@ -127,8 +98,9 @@ func (spkg *SourcePackage) CopySourceRecurse(codeDir, destDir string) (err error
 		}
 	}
 	for _, match := range matches {
-		//TODO copy files
-		log.Printf("copying %s into %s", match, filepath.Join(destDir, filepath.Base(match)))
+		if spkg.IsVerbose {
+			log.Printf("copying %s into %s", match, filepath.Join(destDir, filepath.Base(match)))
+		}
 		r, err := os.Open(match)
 		if err != nil {
 			return err
@@ -157,7 +129,9 @@ func (spkg *SourcePackage) CopySourceRecurse(codeDir, destDir string) (err error
 	}
 	fis, err := ioutil.ReadDir(codeDir)
 	for _, fi := range fis {
-		log.Printf("Comparing fi.Name %s with tmpdir %v", fi.Name(), spkg.Package)
+		if spkg.IsVerbose {
+			log.Printf("Comparing fi.Name %s with tmpdir %v", fi.Name(), spkg.Package)
+		}
 		if fi.IsDir() && fi.Name() != spkg.TmpDir {
 			err = spkg.CopySourceRecurse(filepath.Join(codeDir, fi.Name()), filepath.Join(destDir, fi.Name()))
 			if err != nil {
@@ -169,27 +143,30 @@ func (spkg *SourcePackage) CopySourceRecurse(codeDir, destDir string) (err error
 }
 
 // Builds 'source package' using default templating technique.
-func (spkg *SourcePackage) BuildWithDefaults() error {
+func (spkg *SourcePackage) Build() error {
 	//build
-
 	//1. prepare destination
 	err := os.MkdirAll(spkg.DestDir, 0777)
 	if err != nil {
 		return err
 	}
+	return spkg.BuildFunc(spkg)
+}
 
+// Default function for building the source archive
+func BuildSourcePackageDefault(spkg *SourcePackage) error {
 	//2. Build orig archive.
-	err = spkg.BuildOrigArchive()
+	err := BuildSourceOrigArchiveDefault(spkg)
 	if err != nil {
 		return err
 	}
 	//3. Build debian archive.
-	err = spkg.BuildDebianArchive()
+	err = BuildSourceDebianArchiveDefault(spkg)
 	if err != nil {
 		return err
 	}
 	//4. Build dsc file.
-	err = spkg.BuildDscFile()
+	err = BuildDscFileDefault(spkg)
 	if err != nil {
 		return err
 	}
@@ -199,7 +176,7 @@ func (spkg *SourcePackage) BuildWithDefaults() error {
 
 // Builds <package>.orig.tar.gz
 // This contains all the original data.
-func (spkg *SourcePackage) BuildOrigArchive() error {
+func BuildSourceOrigArchiveDefault(spkg *SourcePackage) error {
 	//TODO add/exclude resources to /usr/share
 	tgzw, err := NewTarGzWriter(spkg.OrigFilePath)
 	if err != nil {
@@ -213,14 +190,16 @@ func (spkg *SourcePackage) BuildOrigArchive() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Created %s", spkg.OrigFilePath)
+	if spkg.IsVerbose {
+		log.Printf("Created %s", spkg.OrigFilePath)
+	}
 	return nil
 }
 
 // Builds <package>.debian.tar.gz
 // This contains all the control data, changelog, rules, etc
-// 
-func (spkg *SourcePackage) BuildDebianArchive() error {
+//
+func BuildSourceDebianArchiveDefault(spkg *SourcePackage) error {
 	//set up template
 	templateVars := spkg.NewTemplateData()
 
@@ -314,11 +293,14 @@ func (spkg *SourcePackage) BuildDebianArchive() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Created %s", spkg.DebianFilePath)
+
+	if spkg.IsVerbose {
+		log.Printf("Created %s", spkg.DebianFilePath)
+	}
 	return nil
 }
 
-func (spkg *SourcePackage) BuildDscFile() error {
+func BuildDscFileDefault(spkg *SourcePackage) error {
 	//set up template
 	templateVars := spkg.NewTemplateData()
 	//4. Create dsc file (calculate checksums first)
@@ -338,7 +320,9 @@ func (spkg *SourcePackage) BuildDscFile() error {
 	}
 	err = ioutil.WriteFile(spkg.DscFilePath, dscData, 0644)
 	if err == nil {
-		log.Printf("Wrote %s", spkg.DscFilePath)
+		if spkg.IsVerbose {
+			log.Printf("Wrote %s", spkg.DscFilePath)
+		}
 	}
 	return err
 }
