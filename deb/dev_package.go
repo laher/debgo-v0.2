@@ -17,12 +17,12 @@
 package deb
 
 import (
-	"fmt"
+//	"fmt"
 //	"path/filepath"
 )
 
 // BuildDevPackageFunc specifies a function which can build a DevPackage
-type BuildDevPackageFunc func(*DevPackage, *BuildParams) error
+//type BuildDevPackageFunc func(*DevPackage, *BuildParams) error
 
 // *DevPackage builds a sources-only '-dev' package, which can be used as a BuildDepends dependency.
 // For pure Go packages, this can be cross-platform (architecture == 'all'), but in some cases it might need to be architecture specific
@@ -30,19 +30,19 @@ type DevPackage struct {
 	*Package
 	//DebFilePath   string
 	BinaryPackage *BinaryPackage
-	BuildFunc     BuildDevPackageFunc
+	//	BuildFunc     BuildDevPackageFunc
 }
 
 // Factory for DevPackage
-func NewDevPackage(pkg *Package, buildFunc BuildDevPackageFunc) *DevPackage {
+func NewDevPackage(pkg *Package) *DevPackage {
 	//debPath := filepath.Join(pkg.DestDir, pkg.Name+"-dev_"+pkg.Version+".deb")
-	ddpkg := &DevPackage{ Package: pkg,
-	//	DebFilePath: debPath,
-		BuildFunc: buildFunc}
+	ddpkg := &DevPackage{Package: pkg} //		DebFilePath: debPath,
+	//		BuildFunc: buildFunc
+
 	return ddpkg
 }
 
-func (ddpkg *DevPackage) InitBinaryPackage(buildFunc BuildBinaryArtifactFunc) {
+func (ddpkg *DevPackage) InitBinaryPackage() {
 	if ddpkg.BinaryPackage == nil {
 		//TODO *complete* copy of properties, using reflection?
 		devpkg := NewPackage(ddpkg.Name+"-dev", ddpkg.Version, ddpkg.Maintainer)
@@ -52,15 +52,16 @@ func (ddpkg *DevPackage) InitBinaryPackage(buildFunc BuildBinaryArtifactFunc) {
 		devpkg.Architecture = "all"
 		//devpkg.IsVerbose = ddpkg.IsVerbose
 		//devpkg.IsRmtemp = ddpkg.IsRmtemp
-		ddpkg.BinaryPackage = NewBinaryPackage(devpkg, buildFunc)
+		ddpkg.BinaryPackage = NewBinaryPackage(devpkg)
 	}
-/*
-	if ddpkg.BinaryPackage.Resources == nil {
-		ddpkg.BinaryPackage.Resources = map[string]string{}
-	}
-*/
+	/*
+		if ddpkg.BinaryPackage.Resources == nil {
+			ddpkg.BinaryPackage.Resources = map[string]string{}
+		}
+	*/
 }
 
+/*
 // Invokes the BuildFunc
 func (ddpkg *DevPackage) Build(build *BuildParams) error {
 	if ddpkg.BuildFunc == nil {
@@ -68,4 +69,4 @@ func (ddpkg *DevPackage) Build(build *BuildParams) error {
 	}
 	return ddpkg.BuildFunc(ddpkg, build)
 }
-
+*/

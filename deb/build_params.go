@@ -33,7 +33,6 @@ type BuildParams struct {
 
 	TemplateDir string            // Optional. Only required if you're using templates
 	Resources   map[string]string // Optional. Only if debgo packages your resources automatically. Key is the destination file. Value is the local file
-
 }
 
 func NewBuildParams() *BuildParams {

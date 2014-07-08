@@ -45,7 +45,6 @@ type Package struct {
 	ExtraData map[string]interface{} // Optional for templates
 }
 
-
 // A factory for a Package. Name, Version and Maintainer are mandatory.
 func NewPackage(name, version, maintainer string) *Package {
 	pkg := new(Package)
@@ -60,13 +59,11 @@ func NewPackage(name, version, maintainer string) *Package {
 	return pkg
 }
 
-
 //Resolve architecture(s) and return as a slice
 func (pkg *Package) GetArches() ([]Architecture, error) {
 	arches, err := resolveArches(pkg.Architecture)
 	return arches, err
 }
-
 
 func (pkg *Package) Validate() error {
 	if pkg.Name == "" {
@@ -80,4 +77,3 @@ func (pkg *Package) Validate() error {
 	}
 	return nil
 }
-

@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestDebBuild(t *testing.T) {
+func Example_buildBinaryDeb(t *testing.T) {
 
 	pkg := NewPackage("testpkg", "0.0.2", "me")
 	pkg.Description = "hiya"
@@ -20,7 +20,7 @@ func TestDebBuild(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	bpkg := NewBinaryPackage(pkg, nil)
+	bpkg := NewBinaryPackage(pkg)
 	platform64 := bpkg.InitBinaryArtifact(Arch_amd64, bp)
 	platform64.Executables = []string{"_test/a.amd64"}
 	platform386 := bpkg.InitBinaryArtifact(Arch_i386, bp)
@@ -28,11 +28,11 @@ func TestDebBuild(t *testing.T) {
 	platformArm := bpkg.InitBinaryArtifact(Arch_armel, bp)
 	platformArm.Executables = []string{"_test/a.armel"}
 
-	bpkg.BuildFunc = func(pkg *BinaryPackage, arch *BinaryArtifact, build *BuildParams) error {
+	buildFunc := func(pkg *BinaryPackage, arch *BinaryArtifact, build *BuildParams) error {
+		//Per-platform build logic goes here
 		return nil
 	}
-	err = bpkg.Build(bp)
-	//err = pkg.Build("amd64", exesMap["amd64"])
+	err = bpkg.Build(bp, buildFunc)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}

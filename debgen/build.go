@@ -14,13 +14,11 @@
    limitations under the License.
 */
 
-package debgo
+package debgen
 
-import(
+import (
 	"github.com/laher/debgo-v0.2/deb"
 )
-
-
 
 // A factory for a Go Package. Includes dependencies and Go Path information
 func NewGoPackage(name, version, maintainer string) *deb.Package {
@@ -31,4 +29,3 @@ func NewGoPackage(name, version, maintainer string) *deb.Package {
 	pkg.Depends = deb.DEPENDS_DEFAULT
 	return pkg
 }
-

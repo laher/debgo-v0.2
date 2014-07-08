@@ -1,21 +1,21 @@
 package deb
 
 import (
-	"testing"
+	"log"
 )
 
-func TestDevDebBuild(t *testing.T) {
+func Example_buildDevPackage() {
 
 	pkg := NewPackage("testpkg", "0.0.2", "me")
 	pkg.Description = "hiya"
 	bp := NewBuildParams()
-	fn := func(dpkg *DevPackage, bp *BuildParams) error {
+	buildFunc := func(dpkg *DevPackage, bp *BuildParams) error {
+		// Generate files here.
 		return nil
 	}
-	ddpkg := NewDevPackage(pkg, fn)
-	err := ddpkg.Build(bp)
-	//err = pkg.Build("amd64", exesMap["amd64"])
+	dpkg := NewDevPackage(pkg)
+	err := buildFunc(dpkg, bp)
 	if err != nil {
-		t.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 	}
 }

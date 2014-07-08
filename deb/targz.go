@@ -19,8 +19,8 @@ package deb
 import (
 	"archive/tar"
 	"compress/gzip"
+	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -64,12 +64,10 @@ func (tgzw *TarGzWriter) Close() error {
 	err2 := tgzw.Gw.Close()
 	err3 := tgzw.Fw.Close()
 	if err1 != nil {
-		log.Printf("Error closing Tar Writer %v", err1)
-		return err1
+		return fmt.Errorf("Error closing Tar Writer %v", err1)
 	}
 	if err2 != nil {
-		log.Printf("Error closing Gzip Writer %v", err2)
-		return err2
+		return fmt.Errorf("Error closing Gzip Writer %v", err2)
 	}
 	return err3
 }
@@ -109,8 +107,6 @@ func (tgzw *TarGzWriter) AddFiles(resources map[string]string) error {
 	}
 	return nil
 }
-
-
 
 // add a file by bytes
 func (tgzw *TarGzWriter) AddBytes(bytes []byte, destName string, mode int64) error {

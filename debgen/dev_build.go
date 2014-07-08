@@ -14,31 +14,37 @@
    limitations under the License.
 */
 
-package debgo
+package debgen
 
 import (
 	"github.com/laher/debgo-v0.2/deb"
-	"log"
+	"fmt"
 )
+/*
+// Generate artifacts for Go-specific packages
+func GenGoDevArtifact(ddpkg *deb.DevPackage, build *deb.BuildParams, sourcesDir string) error {
+	destinationGoPathElement := DEVDEB_GO_PATH_DEFAULT
+	sourcesRelativeTo := GetGoPathElement(sourcesDir)
+	return GenDevArtifact(ddpkg, build, sourcesDir, sourcesRelativeTo, destinationGoPathElement)
+
+}
+*/
 
 // Default build function for Dev packages.
 // Implement your own if you prefer
-func BuildDevPackageDefault(ddpkg *deb.DevPackage, build *deb.BuildParams) error {
+func GenDevArtifact(ddpkg *deb.DevPackage, build *deb.BuildParams) error {
 	if ddpkg.BinaryPackage == nil {
-		ddpkg.InitBinaryPackage(BuildBinaryArtifactDefault)
+		ddpkg.InitBinaryPackage()
 	}
-	destinationGoPathElement := DEVDEB_GO_PATH_DEFAULT
-	goPathRoot := getGoPathElement(build.WorkingDir)
-	resources, err := globForSources(goPathRoot, build.WorkingDir, destinationGoPathElement, []string{build.TmpDir, build.DestDir})
+	artifacts, err := ddpkg.BinaryPackage.GetArtifacts()
 	if err != nil {
 		return err
 	}
-	if build.IsVerbose {
-		log.Printf("Resources found: %v", resources)
+	for arch, artifact := range artifacts {
+		err = GenBinaryArtifact(artifact, build)
+		if err != nil {
+			return fmt.Errorf("Error building for '%s': %v", arch, err)
+		}
 	}
-	for k, v := range resources {
-		build.Resources[k] = v
-	}
-	err = ddpkg.BinaryPackage.Build(build)
 	return err
 }

@@ -17,28 +17,27 @@
 package deb
 
 import (
+	"fmt"
 	"github.com/laher/argo/ar"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 )
 
 // Architecture-specific build information
 type BinaryArtifact struct {
+	*BinaryPackage
 	Architecture        Architecture
 	Filename            string
-	TmpDir              string
 	DebianBinaryVersion string
 	ControlArchFile     string
 	DataArchFile        string
-	Executables         []string
-	IsVerbose           bool
+	Binaries         map[string]string
 }
 
 // Factory of platform build information
-func NewBinaryArtifact(architecture Architecture, filename string, tmpDir string, isVerbose bool) *BinaryArtifact {
-	bdeb := &BinaryArtifact{Architecture: architecture, Filename: filename, TmpDir: tmpDir, IsVerbose: isVerbose}
+func NewBinaryArtifact(binaryPackage *BinaryPackage, architecture Architecture) *BinaryArtifact {
+	bdeb := &BinaryArtifact{BinaryPackage: binaryPackage, Architecture: architecture}
 	bdeb.SetDefaults()
 	return bdeb
 }
@@ -58,7 +57,7 @@ func (bdeb *BinaryArtifact) GetReader() (*ar.Reader, error) {
 // ExtractAll extracts all contents from the Ar archive.
 // It returns a slice of all filenames.
 // In case of any error, it returns the error immediately
-func (bdeb *BinaryArtifact) ExtractAll() ([]string, error) {
+func (bdeb *BinaryArtifact) ExtractAll(build *BuildParams) ([]string, error) {
 	arr, err := bdeb.GetReader()
 	if err != nil {
 		return nil, err
@@ -73,7 +72,7 @@ func (bdeb *BinaryArtifact) ExtractAll() ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		outFilename := filepath.Join(bdeb.TmpDir, hdr.Name)
+		outFilename := filepath.Join(build.TmpDir, hdr.Name)
 		//fmt.Printf("Contents of %s:\n", hdr.Name)
 		fi, err := os.Create(outFilename)
 		if err != nil {
@@ -93,9 +92,10 @@ func (bdeb *BinaryArtifact) ExtractAll() ([]string, error) {
 }
 
 func (bdeb *BinaryArtifact) SetDefaults() {
+	bdeb.Filename = fmt.Sprintf("%s_%s_%s.deb", bdeb.Name, bdeb.Version, bdeb.Architecture) //goxc_0.5.2_i386.deb")
 	bdeb.DebianBinaryVersion = DEBIAN_BINARY_VERSION_DEFAULT
-	bdeb.ControlArchFile = filepath.Join(bdeb.TmpDir, "control.tar.gz")
-	bdeb.DataArchFile = filepath.Join(bdeb.TmpDir, "data.tar.gz")
+	bdeb.ControlArchFile = "control.tar.gz"
+	bdeb.DataArchFile = "data.tar.gz"
 }
 
 func (bdeb *BinaryArtifact) WriteBytes(aw *ar.Writer, filename string, bytes []byte) error {
@@ -116,18 +116,12 @@ func (bdeb *BinaryArtifact) WriteFromFile(aw *ar.Writer, filename string) error 
 	if err != nil {
 		return err
 	}
-	if bdeb.IsVerbose {
-		log.Printf("Finf size: %d", finf.Size())
-	}
 	hdr, err := ar.FileInfoHeader(finf)
 	if err != nil {
 		return err
 	}
 	if err := aw.WriteHeader(hdr); err != nil {
 		return err
-	}
-	if bdeb.IsVerbose {
-		log.Printf("Header Size: %d", hdr.Size)
 	}
 	fi, err := os.Open(filename)
 	if err != nil {
@@ -145,37 +139,29 @@ func (bdeb *BinaryArtifact) WriteFromFile(aw *ar.Writer, filename string) error 
 
 }
 
-func (bdeb *BinaryArtifact) Build() error {
-	if bdeb.IsVerbose {
-		log.Printf("Building deb %s", bdeb.Filename)
-	}
-	wtr, err := os.Create(bdeb.Filename)
+func (bdeb *BinaryArtifact) Build(build *BuildParams) error {
+	wtr, err := os.Create(filepath.Join(build.DestDir, bdeb.Filename))
 	if err != nil {
 		return err
 	}
 
 	aw := ar.NewWriter(wtr)
 
-	if bdeb.IsVerbose {
-		log.Printf("Writing debian-binary")
-	}
 	err = bdeb.WriteBytes(aw, "debian-binary", []byte(bdeb.DebianBinaryVersion+"\n"))
 	if err != nil {
-		return err
+		return fmt.Errorf("Error writing debian-binary into .ar archive: %v", err)
 	}
-	if bdeb.IsVerbose {
-		log.Printf("Writing control file %s", bdeb.ControlArchFile)
-	}
-	err = bdeb.WriteFromFile(aw, bdeb.ControlArchFile)
+	err = bdeb.WriteFromFile(aw, filepath.Join(build.TmpDir, bdeb.ControlArchFile))
 	if err != nil {
-		return err
+		return fmt.Errorf("Error writing control archive into .ar archive: %v", err)
 	}
-	if bdeb.IsVerbose {
-		log.Printf("Writing data file %s", bdeb.DataArchFile)
-	}
-	err = bdeb.WriteFromFile(aw, bdeb.DataArchFile)
+	err = bdeb.WriteFromFile(aw, filepath.Join(build.TmpDir, bdeb.DataArchFile))
 	if err != nil {
-		return err
+		return fmt.Errorf("Error writing data archive into .ar archive: %v", err)
+	}
+	err = aw.Close()
+	if err != nil {
+		return fmt.Errorf("Error closing .ar archive: %v", err)
 	}
 	return nil
 }

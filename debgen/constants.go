@@ -1,11 +1,12 @@
-package debgo
+package debgen
 
-import(
+import (
 	"github.com/laher/debgo-v0.2/deb"
 )
 
 const (
-	TEMPLATE_DEBIAN_SOURCE_FORMAT  = deb.FORMAT_DEFAULT                                         // Debian source formaat
+	GLOB_GO_SOURCES = "*.go"
+	TEMPLATE_DEBIAN_SOURCE_FORMAT  = deb.FORMAT_DEFAULT                                     // Debian source formaat
 	TEMPLATE_DEBIAN_SOURCE_OPTIONS = `tar-ignore = .hg
 tar-ignore = .git
 tar-ignore = .bzr` //specifies files to ignore while building.
@@ -99,7 +100,6 @@ Files:{{range .Checksums.ChecksumsMd5}}
 ==========
 
 `
-	DEVDEB_GO_PATH_DEFAULT    = "/usr/share/gocode" // This is used by existing -dev.deb packages e.g. golang-doozer-dev and golang-protobuf-dev
-	GO_PATH_EXTRA_DEFAULT     = ":" + DEVDEB_GO_PATH_DEFAULT
-	
+	DEVDEB_GO_PATH_DEFAULT = "/usr/share/gocode" // This is used by existing -dev.deb packages e.g. golang-doozer-dev and golang-protobuf-dev
+	GO_PATH_EXTRA_DEFAULT  = ":" + DEVDEB_GO_PATH_DEFAULT
 )

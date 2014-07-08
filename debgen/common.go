@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package debgo
+package debgen
 
 import (
 	"fmt"
@@ -40,8 +40,8 @@ func absAndResolveSymlinks(path string) (string, error) {
 
 // Tries to find the most relevant GOPATH element.
 // First, tries to find an element which is a parent of the current directory.
-// If not, it uses the first one.
-func getGoPathElement(workingDirectory string) string {
+// If not, it uses the first element from the GOPATH
+func GetGoPathElement(workingDirectory string) string {
 	var gopath string
 	gopathVar := os.Getenv("GOPATH")
 	if gopathVar == "" {
@@ -85,10 +85,19 @@ func getGoPathElement(workingDirectory string) string {
 	return gopath
 }
 
-// Glob for Go sources.
+// Glob for Go-specific sources
+func GlobForGoSources(sourcesDir string, ignore []string) (map[string]string, error) {
+	destinationDir := DEVDEB_GO_PATH_DEFAULT
+	sourcesRelativeTo := GetGoPathElement(sourcesDir)
+	resources, err := GlobForSources(sourcesRelativeTo, sourcesDir, GLOB_GO_SOURCES, destinationDir, ignore)
+	return resources, err
+}
+
+
+// Glob for sources.
 // This function looks for source files, and prepares their paths for
-func globForSources(goPathRoot, codeDir, destinationPrefix string, ignoreFiles []string) (map[string]string, error) {
-	goPathRootAbs, err := absAndResolveSymlinks(goPathRoot)
+func GlobForSources(sourcesRelativeDir, codeDir, glob, destinationPrefix string, ignoreFiles []string) (map[string]string, error) {
+	sourcesRelativeDirAbs, err := absAndResolveSymlinks(sourcesRelativeDir)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +105,7 @@ func globForSources(goPathRoot, codeDir, destinationPrefix string, ignoreFiles [
 
 	//1. Glob for files in this dir
 	//log.Printf("Globbing %s", codeDir)
-	matches, err := filepath.Glob(filepath.Join(codeDir, "*.go"))
+	matches, err := filepath.Glob(filepath.Join(codeDir, glob))
 	if err != nil {
 		return nil, err
 	}
@@ -113,12 +122,10 @@ func globForSources(goPathRoot, codeDir, destinationPrefix string, ignoreFiles [
 			if err != nil {
 				return nil, fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
 			}
-			relativeMatch, err := filepath.Rel(goPathRootAbs, absMatch)
+			relativeMatch, err := filepath.Rel(sourcesRelativeDirAbs, absMatch)
 			if err != nil {
 				return nil, fmt.Errorf("Error finding go sources (match %s): %v,", match, err)
 			}
-			//log.Printf("Adding %s into %s / %s relative to %s", match, destinationPrefix, relativeMatch, goPathRootAbs)
-
 			destName := filepath.Join(destinationPrefix, relativeMatch)
 			sources[destName] = match
 		}
@@ -135,7 +142,7 @@ func globForSources(goPathRoot, codeDir, destinationPrefix string, ignoreFiles [
 				}
 			}
 			if !ignore {
-				moreSources, err := globForSources(goPathRoot, filepath.Join(codeDir, fi.Name()), destinationPrefix, ignoreFiles)
+				moreSources, err := GlobForSources(sourcesRelativeDir, filepath.Join(codeDir, fi.Name()), glob, destinationPrefix, ignoreFiles)
 				if err != nil {
 					return nil, err
 				}

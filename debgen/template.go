@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package debgo
+package debgen
 
 import (
 	"bytes"
@@ -100,6 +100,7 @@ func ProcessTemplateString(tplText string, vars interface{}) ([]byte, error) {
 	return dest.Bytes(), nil
 
 }
+
 /*
 func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, arch, description, depends, buildDepends, priority, status, standardsVersion, section, format string, extraData map[string]interface{}, metadataDeb map[string]string) TemplateData {
 	vars := TemplateData{

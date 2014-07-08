@@ -16,37 +16,28 @@
 
 package deb
 
-import (
-	"os"
-	"path/filepath"
-)
-
 // Function type to allow customized build process
-type BuildSourcePackageFunc func(spkg *SourcePackage, build *BuildParams) error
+//type BuildSourcePackageFunc func(spkg *SourcePackage, build *BuildParams) error
 
 // The source package is a cross-platform package with a .dsc file.
 type SourcePackage struct {
 	*Package
-	DscFilePath    string
-	OrigFilePath   string
-	DebianFilePath string
-	BuildFunc      BuildSourcePackageFunc
+	DscFileName    string
+	OrigFileName   string
+	DebianFileName string
+	//BuildFunc      BuildSourcePackageFunc
 }
 
 // Factory for a source package. Sets up default paths..
-func NewSourcePackage(pkg *Package, buildFunc BuildSourcePackageFunc) *SourcePackage {
-	spkg := &SourcePackage{Package: pkg,
-		BuildFunc: buildFunc}
-//	spkg.InitDefaultFilenames()
+// Initialises default filenames, using .tar.gz as the archive type
+func NewSourcePackage(pkg *Package) *SourcePackage {
+	spkg := &SourcePackage{Package: pkg}
+	spkg.DscFileName = spkg.Name + "_" + spkg.Version + ".dsc"
+	spkg.OrigFileName = spkg.Name + "_" + spkg.Version + ".orig.tar.gz"
+	spkg.DebianFileName = spkg.Name + "_" + spkg.Version + ".debian.tar.gz"
 	return spkg
 }
 
-// Initialises default filenames, using .tar.gz as the archive type
-func (spkg *SourcePackage) InitDefaultFilenames(build *BuildParams) {
-	spkg.DscFilePath = filepath.Join(build.DestDir, spkg.Name+"_"+spkg.Version+".dsc")
-	spkg.OrigFilePath = filepath.Join(build.DestDir, spkg.Name+"_"+spkg.Version+".orig.tar.gz")
-	spkg.DebianFilePath = filepath.Join(build.DestDir, spkg.Name+"_"+spkg.Version+".debian.tar.gz")
-}
 /*
 func (spkg *SourcePackage) CopySourceRecurse(codeDir, destDir string) (err error) {
 	if spkg.IsVerbose {
@@ -107,15 +98,15 @@ func (spkg *SourcePackage) CopySourceRecurse(codeDir, destDir string) (err error
 	}
 	return nil
 }
-*/
-// Builds 'source package' using default templating technique.
-func (spkg *SourcePackage) Build(build *BuildParams) error {
+
+func (spkg *SourcePackage) Init(build *BuildParams) error {
 	//build
 	//1. prepare destination
 	err := os.MkdirAll(build.DestDir, 0777)
 	if err != nil {
 		return err
 	}
-	return spkg.BuildFunc(spkg, build)
+	return err
 }
 
+*/

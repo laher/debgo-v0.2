@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package debgo
+package debgen
 
 import (
 	"github.com/laher/debgo-v0.2/deb"
@@ -24,19 +24,19 @@ import (
 )
 
 // This is the default build process for a BuildArtifact
-func BuildBinaryArtifactDefault(pkg *deb.BinaryPackage, archArtifact *deb.BinaryArtifact, build *deb.BuildParams) error {
-	_, err := BuildDefaultControlArchive(pkg, archArtifact, build)
+func GenBinaryArtifact(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) error {
+	_, err := BuildDefaultControlArchive(archArtifact, build)
 	if err != nil {
 		return err
 	}
-	_, err = BuildDefaultDataArchive(pkg, archArtifact, build)
+	_, err = BuildDefaultDataArchive( archArtifact, build)
 	if err != nil {
 		return err
 	}
 	if build.IsVerbose {
 		log.Printf("trying to write .deb file for %s", archArtifact.Architecture)
 	}
-	err = archArtifact.Build()
+	err = archArtifact.Build(build)
 	return err
 
 	if err != nil {
@@ -48,14 +48,14 @@ func BuildBinaryArtifactDefault(pkg *deb.BinaryPackage, archArtifact *deb.Binary
 	return err
 }
 
-func BuildDefaultControlArchive(pkg *deb.BinaryPackage, archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (string, error) {
-	controlTgzw, err := pkg.InitControlArchive(build)
+func BuildDefaultControlArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (string, error) {
+	controlTgzw, err := archArtifact.InitControlArchive(build)
 	if err != nil {
 		return "", err
 	}
-	templateVars := NewTemplateData(pkg.Package)
+	templateVars := NewTemplateData(archArtifact.BinaryPackage.Package)
 	templateVars.Architecture = string(archArtifact.Architecture)
-	err = AddDefaultControlFile(pkg, archArtifact, controlTgzw, templateVars, build)
+	err = AddDefaultControlFile(archArtifact, controlTgzw, templateVars, build)
 	if err != nil {
 		return "", err
 	}
@@ -65,8 +65,8 @@ func BuildDefaultControlArchive(pkg *deb.BinaryPackage, archArtifact *deb.Binary
 	// This is where you'd include Postrm/Postinst etc
 	scripts := []string{"postinst", "postrm", "prerm", "preinst"}
 	for _, scriptName := range scripts {
-		templatePath := filepath.Join(build.TemplateDir, scriptName + ".tpl")
-		_,  err = os.Stat(templatePath)
+		templatePath := filepath.Join(build.TemplateDir, scriptName+".tpl")
+		_, err = os.Stat(templatePath)
 		//TODO handle non-EOF errors
 		if err == nil {
 			scriptData, err := ProcessTemplateFile(templatePath, templateVars)
@@ -90,12 +90,12 @@ func BuildDefaultControlArchive(pkg *deb.BinaryPackage, archArtifact *deb.Binary
 	return controlTgzw.Filename, err
 }
 
-func BuildDefaultDataArchive(pkg *deb.BinaryPackage, archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (string, error) {
-	dataTgzw, err := pkg.InitDataArchive(build)
+func BuildDefaultDataArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (string, error) {
+	dataTgzw, err := archArtifact.InitDataArchive(build)
 	if err != nil {
 		return "", err
 	}
-	err = pkg.AddExecutablesByFilepath(archArtifact.Executables, dataTgzw)
+	err = dataTgzw.AddFiles(archArtifact.Binaries)
 	if err != nil {
 		return "", err
 	}
@@ -120,8 +120,7 @@ func BuildDefaultDataArchive(pkg *deb.BinaryPackage, archArtifact *deb.BinaryArt
 	return dataTgzw.Filename, err
 }
 
-
-func AddDefaultControlFile(pkg *deb.BinaryPackage, archArtifact *deb.BinaryArtifact, tgzw *deb.TarGzWriter, templateVars *TemplateData, build *deb.BuildParams) error {
+func AddDefaultControlFile(archArtifact *deb.BinaryArtifact, tgzw *deb.TarGzWriter, templateVars *TemplateData, build *deb.BuildParams) error {
 	controlData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "control.tpl"), TEMPLATE_BINARYDEB_CONTROL, templateVars)
 	if err != nil {
 		return err
@@ -135,4 +134,3 @@ func AddDefaultControlFile(pkg *deb.BinaryPackage, archArtifact *deb.BinaryArtif
 	}
 	return err
 }
-

@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package debgo
+package debgen
 
 import (
 	"fmt"
@@ -24,20 +24,19 @@ import (
 	"path/filepath"
 )
 
-
 // Default function for building the source archive
-func BuildSourcePackageDefault(spkg *deb.SourcePackage, build *deb.BuildParams) error {
-	//2. Build orig archive.
+func GenSourceArtifacts(spkg *deb.SourcePackage, build *deb.BuildParams) error {
+	//1. Build orig archive.
 	err := BuildSourceOrigArchiveDefault(spkg, build)
 	if err != nil {
 		return err
 	}
-	//3. Build debian archive.
+	//2. Build debian archive.
 	err = BuildSourceDebianArchiveDefault(spkg, build)
 	if err != nil {
 		return err
 	}
-	//4. Build dsc file.
+	//3. Build dsc file.
 	err = BuildDscFileDefault(spkg, build)
 	if err != nil {
 		return err
@@ -50,7 +49,8 @@ func BuildSourcePackageDefault(spkg *deb.SourcePackage, build *deb.BuildParams) 
 // This contains all the original data.
 func BuildSourceOrigArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildParams) error {
 	//TODO add/exclude resources to /usr/share
-	tgzw, err := deb.NewTarGzWriter(spkg.OrigFilePath)
+	origFilePath := filepath.Join(build.DestDir, spkg.OrigFileName)
+	tgzw, err := deb.NewTarGzWriter(origFilePath)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func BuildSourceOrigArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPara
 		return err
 	}
 	if build.IsVerbose {
-		log.Printf("Created %s", spkg.OrigFilePath)
+		log.Printf("Created %s", origFilePath)
 	}
 	return nil
 }
@@ -76,7 +76,7 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 	templateVars := NewTemplateData(spkg.Package)
 
 	// generate .debian.tar.gz (just containing debian/ directory)
-	tgzw, err := deb.NewTarGzWriter(spkg.DebianFilePath)
+	tgzw, err := deb.NewTarGzWriter(filepath.Join(build.DestDir, spkg.DebianFileName))
 
 	//debian/control
 	controlData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "control.tpl"), TEMPLATE_SOURCEDEB_CONTROL, templateVars)
@@ -167,7 +167,7 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 	}
 
 	if build.IsVerbose {
-		log.Printf("Created %s", spkg.DebianFilePath)
+		log.Printf("Created %s", tgzw.Filename)
 	}
 	return nil
 }
@@ -177,11 +177,11 @@ func BuildDscFileDefault(spkg *deb.SourcePackage, build *deb.BuildParams) error 
 	templateVars := NewTemplateData(spkg.Package)
 	//4. Create dsc file (calculate checksums first)
 	cs := new(deb.Checksums)
-	err := cs.Add(spkg.OrigFilePath, filepath.Base(spkg.OrigFilePath))
+	err := cs.Add(filepath.Join(build.DestDir, spkg.OrigFileName), spkg.OrigFileName)
 	if err != nil {
 		return err
 	}
-	err = cs.Add(spkg.DebianFilePath, filepath.Base(spkg.DebianFilePath))
+	err = cs.Add(filepath.Join(build.DestDir, spkg.DebianFileName), spkg.DebianFileName)
 	if err != nil {
 		return err
 	}
@@ -190,19 +190,19 @@ func BuildDscFileDefault(spkg *deb.SourcePackage, build *deb.BuildParams) error 
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(spkg.DscFilePath, dscData, 0644)
+	dscFilePath := filepath.Join(build.DestDir, spkg.DscFileName)
+	err = ioutil.WriteFile(dscFilePath, dscData, 0644)
 	if err == nil {
 		if build.IsVerbose {
-			log.Printf("Wrote %s", spkg.DscFilePath)
+			log.Printf("Wrote %s", dscFilePath)
 		}
 	}
 	return err
 }
 
-
 // TODO: unfinished: need to discover root dir to determine which dirs to pre-make.
 func AddSources(spkg *deb.SourcePackage, codeDir, destinationPrefix string, tgzw *deb.TarGzWriter, build *deb.BuildParams) error {
-	goPathRootTemp := getGoPathElement(codeDir)
+	goPathRootTemp := GetGoPathElement(codeDir)
 	goPathRoot, err := filepath.EvalSymlinks(goPathRootTemp)
 	if err != nil {
 		log.Printf("Could not evaluate symlinks for '%s'", goPathRootTemp)
@@ -211,7 +211,7 @@ func AddSources(spkg *deb.SourcePackage, codeDir, destinationPrefix string, tgzw
 	if build.IsVerbose {
 		log.Printf("Code dir '%s' (using goPath element '%s')", codeDir, goPathRoot)
 	}
-	sources, err := globForSources(goPathRootTemp, codeDir, destinationPrefix, []string{build.TmpDir, build.DestDir})
+	sources, err := GlobForSources(goPathRootTemp, codeDir, GLOB_GO_SOURCES, destinationPrefix, []string{build.TmpDir, build.DestDir})
 	if err != nil {
 		return err
 	}
@@ -224,4 +224,3 @@ func AddSources(spkg *deb.SourcePackage, codeDir, destinationPrefix string, tgzw
 	}
 	return nil
 }
-
