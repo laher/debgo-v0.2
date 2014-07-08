@@ -145,7 +145,7 @@ func (bdeb *BinaryArtifact) WriteFromFile(aw *ar.Writer, filename string) error 
 
 }
 
-func (bdeb *BinaryArtifact) WriteAll() error {
+func (bdeb *BinaryArtifact) Build() error {
 	if bdeb.IsVerbose {
 		log.Printf("Building deb %s", bdeb.Filename)
 	}

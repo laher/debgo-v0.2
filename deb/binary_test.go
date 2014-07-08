@@ -10,8 +10,7 @@ func TestDebBuild(t *testing.T) {
 
 	pkg := NewPackage("testpkg", "0.0.2", "me")
 	pkg.Description = "hiya"
-	pkg.IsRmtemp = false
-	pkg.IsVerbose = true
+	bp := NewBuildParams()
 
 	exesMap := map[string][]string{
 		"amd64": []string{"_test/a.amd64"},
@@ -21,16 +20,18 @@ func TestDebBuild(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-
-	bpkg := NewBinaryPackage(pkg)
-	platform64 := bpkg.InitBinaryArtifact(Arch_amd64)
+	bpkg := NewBinaryPackage(pkg, nil)
+	platform64 := bpkg.InitBinaryArtifact(Arch_amd64, bp)
 	platform64.Executables = []string{"_test/a.amd64"}
-	platform386 := bpkg.InitBinaryArtifact(Arch_i386)
+	platform386 := bpkg.InitBinaryArtifact(Arch_i386, bp)
 	platform386.Executables = []string{"_test/a.i386"}
-	platformArm := bpkg.InitBinaryArtifact(Arch_armel)
+	platformArm := bpkg.InitBinaryArtifact(Arch_armel, bp)
 	platformArm.Executables = []string{"_test/a.armel"}
 
-	err = bpkg.Build()
+	bpkg.BuildFunc = func(pkg *BinaryPackage, arch *BinaryArtifact, build *BuildParams) error {
+		return nil
+	}
+	err = bpkg.Build(bp)
 	//err = pkg.Build("amd64", exesMap["amd64"])
 	if err != nil {
 		t.Fatalf("%v", err)

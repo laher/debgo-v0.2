@@ -95,6 +95,23 @@ func (tgzw *TarGzWriter) AddFile(sourceFile, destName string) error {
 	return nil
 }
 
+// Add resources from file system.
+// The key should be the destination filename. Value is the local filesystem path
+func (tgzw *TarGzWriter) AddFiles(resources map[string]string) error {
+	if resources != nil {
+		for name, localPath := range resources {
+			err := tgzw.AddFile(localPath, name)
+			if err != nil {
+				tgzw.Close()
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+
+
 // add a file by bytes
 func (tgzw *TarGzWriter) AddBytes(bytes []byte, destName string, mode int64) error {
 	err := tgzw.Tw.WriteHeader(NewTarHeader(destName, int64(len(bytes)), mode))
