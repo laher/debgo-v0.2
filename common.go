@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package deb
+package debgo
 
 import (
 	"fmt"

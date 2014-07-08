@@ -14,15 +14,34 @@
    limitations under the License.
 */
 
-package deb
+package debgo
 
 import (
 	"bytes"
+	"github.com/laher/debgo-v0.2/deb"
 	"io/ioutil"
 	"os"
 	"text/template"
-	"time"
 )
+
+// initialize "template data" object
+func NewTemplateData(pkg *deb.Package) *TemplateData {
+	templateVars := TemplateData{pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Architecture,
+		pkg.Section,
+		pkg.Depends,
+		pkg.BuildDepends,
+		pkg.Priority,
+		pkg.Description,
+		pkg.StandardsVersion,
+		"",
+		pkg.Status,
+		"",
+		pkg.Format,
+		pkg.AdditionalControlData,
+		pkg.ExtraData,
+		nil}
+	return &templateVars
+}
 
 //Data for templates
 type TemplateData struct {
@@ -43,7 +62,7 @@ type TemplateData struct {
 	Format                string
 	AdditionalControlData map[string]string
 	ExtraData             map[string]interface{}
-	Checksums             *Checksums
+	Checksums             *deb.Checksums
 }
 
 func ProcessTemplateFileOrString(templateFile string, templateDefault string, vars interface{}) ([]byte, error) {
@@ -81,7 +100,7 @@ func ProcessTemplateString(tplText string, vars interface{}) ([]byte, error) {
 	return dest.Bytes(), nil
 
 }
-
+/*
 func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, arch, description, depends, buildDepends, priority, status, standardsVersion, section, format string, extraData map[string]interface{}, metadataDeb map[string]string) TemplateData {
 	vars := TemplateData{
 		appName,
@@ -104,3 +123,4 @@ func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, 
 		nil}
 	return vars
 }
+*/

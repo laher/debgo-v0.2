@@ -18,31 +18,31 @@ package deb
 
 import (
 	"fmt"
-	"log"
-	"path/filepath"
+//	"path/filepath"
 )
 
 // BuildDevPackageFunc specifies a function which can build a DevPackage
-type BuildDevPackageFunc func(*DevPackage) error
+type BuildDevPackageFunc func(*DevPackage, *BuildParams) error
 
 // *DevPackage builds a sources-only '-dev' package, which can be used as a BuildDepends dependency.
 // For pure Go packages, this can be cross-platform (architecture == 'all'), but in some cases it might need to be architecture specific
 type DevPackage struct {
 	*Package
-	DebFilePath   string
+	//DebFilePath   string
 	BinaryPackage *BinaryPackage
 	BuildFunc     BuildDevPackageFunc
 }
 
 // Factory for DevPackage
-func NewDevPackage(pkg *Package) *DevPackage {
-	debPath := filepath.Join(pkg.DestDir, pkg.Name+"-dev_"+pkg.Version+".deb")
-	return &DevPackage{Package: pkg,
-		DebFilePath: debPath,
-		BuildFunc:   BuildDefault}
+func NewDevPackage(pkg *Package, buildFunc BuildDevPackageFunc) *DevPackage {
+	//debPath := filepath.Join(pkg.DestDir, pkg.Name+"-dev_"+pkg.Version+".deb")
+	ddpkg := &DevPackage{ Package: pkg,
+	//	DebFilePath: debPath,
+		BuildFunc: buildFunc}
+	return ddpkg
 }
 
-func (ddpkg *DevPackage) InitBinaryPackage() {
+func (ddpkg *DevPackage) InitBinaryPackage(buildFunc BuildBinaryArtifactFunc) {
 	if ddpkg.BinaryPackage == nil {
 		//TODO *complete* copy of properties, using reflection?
 		devpkg := NewPackage(ddpkg.Name+"-dev", ddpkg.Version, ddpkg.Maintainer)
@@ -50,41 +50,22 @@ func (ddpkg *DevPackage) InitBinaryPackage() {
 		devpkg.MaintainerEmail = ddpkg.MaintainerEmail
 		devpkg.AdditionalControlData = ddpkg.AdditionalControlData
 		devpkg.Architecture = "all"
-		devpkg.IsVerbose = ddpkg.IsVerbose
-		devpkg.IsRmtemp = ddpkg.IsRmtemp
-		ddpkg.BinaryPackage = NewBinaryPackage(devpkg)
+		//devpkg.IsVerbose = ddpkg.IsVerbose
+		//devpkg.IsRmtemp = ddpkg.IsRmtemp
+		ddpkg.BinaryPackage = NewBinaryPackage(devpkg, buildFunc)
 	}
+/*
 	if ddpkg.BinaryPackage.Resources == nil {
 		ddpkg.BinaryPackage.Resources = map[string]string{}
 	}
+*/
 }
 
 // Invokes the BuildFunc
-func (ddpkg *DevPackage) Build() error {
+func (ddpkg *DevPackage) Build(build *BuildParams) error {
 	if ddpkg.BuildFunc == nil {
 		return fmt.Errorf("No build function provided (*DevPackage.BuildFunc)")
 	}
-	return ddpkg.BuildFunc(ddpkg)
+	return ddpkg.BuildFunc(ddpkg, build)
 }
 
-// Default build function for Dev packages.
-// Implement your own if you prefer
-func BuildDefault(ddpkg *DevPackage) error {
-	if ddpkg.BinaryPackage == nil {
-		ddpkg.InitBinaryPackage()
-	}
-	destinationGoPathElement := DEVDEB_GO_PATH_DEFAULT
-	goPathRoot := getGoPathElement(ddpkg.WorkingDir)
-	resources, err := globForSources(goPathRoot, ddpkg.WorkingDir, destinationGoPathElement, []string{ddpkg.TmpDir, ddpkg.DestDir})
-	if err != nil {
-		return err
-	}
-	if ddpkg.IsVerbose {
-		log.Printf("Resources found: %v", resources)
-	}
-	for k, v := range resources {
-		ddpkg.BinaryPackage.Resources[k] = v
-	}
-	err = ddpkg.BinaryPackage.Build()
-	return err
-}

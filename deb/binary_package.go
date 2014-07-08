@@ -24,7 +24,7 @@ import (
 )
 
 // BuildDevPackageFunc specifies a function which can build a DevPackage
-type BuildBinaryArtifactFunc func(*BinaryPackage, *BinaryArtifact) error
+type BuildBinaryArtifactFunc func(*BinaryPackage, *BinaryArtifact, *BuildParams) error
 
 // *BinaryPackage specifies functionality for building binary '.deb' packages.
 // This encapsulates a Package plus information about platform-specific debs and executables
@@ -36,29 +36,35 @@ type BinaryPackage struct {
 }
 
 // Factory for BinaryPackage
-func NewBinaryPackage(pkg *Package) *BinaryPackage {
-	return &BinaryPackage{Package: pkg, ExeDest: "/usr/bin", BuildFunc: BuildBinaryArtifactDefault}
+func NewBinaryPackage(pkg *Package, builder BuildBinaryArtifactFunc) *BinaryPackage {
+	return &BinaryPackage{Package: pkg, ExeDest: "/usr/bin", BuildFunc: builder}
 }
 
 // Builds debs for all arches.
-func (pkg *BinaryPackage) Build() error {
+func (pkg *BinaryPackage) Build(build *BuildParams) error {
+	if pkg.BuildFunc == nil {
+		return ErrNoBuildFunc
+	}
 	arches, err := pkg.GetArches()
 	if err != nil {
 		return err
 	}
-	err = pkg.Init()
+	err = build.Init()
 	if err != nil {
 		return err
 	}
 	for _, arch := range arches {
 		archArtifact := pkg.GetBinaryArtifact(arch)
-		if pkg.IsVerbose {
+		if archArtifact == nil {
+			archArtifact = pkg.InitBinaryArtifact(arch, build)
+		}
+		if build.IsVerbose {
 			log.Printf("Building for arch %s", arch)
 		}
-		err = pkg.BuildFunc(pkg, archArtifact)
+		err = pkg.BuildFunc(pkg, archArtifact, build)
 		//even with an error, remove temp
-		if pkg.IsRmtemp {
-			os.RemoveAll(pkg.TmpDir)
+		if build.IsRmtemp {
+			os.RemoveAll(build.TmpDir)
 
 		}
 		if err != nil {
@@ -73,105 +79,15 @@ func (pkg *BinaryPackage) Build() error {
 // To get full flexibility, please use the more granular methods to return archives and add manual work
 func (pkg *BinaryPackage) GetBinaryArtifact(arch Architecture) *BinaryArtifact {
 	platform := pkg.getBinaryArtifact(arch)
-	if platform == nil {
+/*	if platform == nil {
 		platform = pkg.InitBinaryArtifact(arch)
-	}
+	}*/
 	return platform
 }
 
-// This is the default build process for a BuildArtifact
-func BuildBinaryArtifactDefault(pkg *BinaryPackage, archArtifact *BinaryArtifact) error {
-	_, err := pkg.BuildDefaultControlArchive(archArtifact)
-	if err != nil {
-		return err
-	}
-	_, err = pkg.BuildDefaultDataArchive(archArtifact)
-	if err != nil {
-		return err
-	}
-	err = pkg.BuildDebFile(archArtifact)
-	if err != nil {
-		return err
-	}
-	if pkg.IsVerbose {
-		log.Printf("Closed deb")
-	}
-	return err
-}
-
-func (pkg *BinaryPackage) BuildDefaultControlArchive(archArtifact *BinaryArtifact) (string, error) {
-	controlTgzw, err := pkg.InitControlArchive()
-	if err != nil {
-		return "", err
-	}
-	err = pkg.AddDefaultControlFile(archArtifact, controlTgzw)
-	if err != nil {
-		return "", err
-	}
-	if pkg.IsVerbose {
-		log.Printf("Wrote control file to control archive")
-	}
-	// This is where you'd include Postrm/Postinst etc
-
-	err = controlTgzw.Close()
-	if err != nil {
-		return "", err
-	}
-	if pkg.IsVerbose {
-		log.Printf("Closed control archive")
-	}
-	return controlTgzw.Filename, err
-}
-
-func (pkg *BinaryPackage) BuildDefaultDataArchive(archArtifact *BinaryArtifact) (string, error) {
-	dataTgzw, err := pkg.InitDataArchive()
-	if err != nil {
-		return "", err
-	}
-	err = pkg.AddExecutablesByFilepath(archArtifact.Executables, dataTgzw)
-	if err != nil {
-		return "", err
-	}
-	if pkg.IsVerbose {
-		log.Printf("Added executables")
-	}
-	err = pkg.AddResources(pkg.Resources, dataTgzw)
-	if err != nil {
-		return "", err
-	}
-	if pkg.IsVerbose {
-		log.Printf("Added resources")
-	}
-	err = dataTgzw.Close()
-	if err != nil {
-		return "", err
-	}
-	if pkg.IsVerbose {
-		log.Printf("Closed data archive")
-	}
-	return dataTgzw.Filename, err
-}
-
-func (pkg *BinaryPackage) AddDefaultControlFile(archArtifact *BinaryArtifact, tgzw *TarGzWriter) error {
-	templateVars := pkg.NewTemplateData()
-	templateVars.Architecture = string(archArtifact.Architecture)
-	controlData, err := ProcessTemplateFileOrString(filepath.Join(pkg.TemplateDir, "control.tpl"), TEMPLATE_BINARYDEB_CONTROL, templateVars)
-	if err != nil {
-		return err
-	}
-	if pkg.IsVerbose {
-		log.Printf("Control file:\n%s", string(controlData))
-	}
-	err = tgzw.AddBytes(controlData, "control", 0644)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // Initialise and return the 'control.tar.gz' archive
-func (pkg *BinaryPackage) InitControlArchive() (*TarGzWriter, error) {
-	archiveFilename := filepath.Join(pkg.TmpDir, "control.tar.gz")
+func (pkg *BinaryPackage) InitControlArchive(build *BuildParams) (*TarGzWriter, error) {
+	archiveFilename := filepath.Join(build.TmpDir, "control.tar.gz")
 	tgzw, err := NewTarGzWriter(archiveFilename)
 	if err != nil {
 		return nil, err
@@ -180,8 +96,8 @@ func (pkg *BinaryPackage) InitControlArchive() (*TarGzWriter, error) {
 }
 
 // Initialise and return the 'data.tar.gz' archive
-func (pkg *BinaryPackage) InitDataArchive() (*TarGzWriter, error) {
-	archiveFilename := filepath.Join(pkg.TmpDir, "data.tar.gz")
+func (pkg *BinaryPackage) InitDataArchive(build *BuildParams) (*TarGzWriter, error) {
+	archiveFilename := filepath.Join(build.TmpDir, "data.tar.gz")
 	tgzw, err := NewTarGzWriter(archiveFilename)
 	if err != nil {
 		return nil, err
@@ -210,32 +126,16 @@ func (pkg *BinaryPackage) AddFilesByFilepath(destinationDir string, executablePa
 	return nil
 }
 
-// Add resources from file system.
-// In this context, resources are simply files to include untouched to every architecture
-// TODO add README.debian automatically
-func (pkg *BinaryPackage) AddResources(resources map[string]string, tgzw *TarGzWriter) error {
-	if resources != nil {
-		for name, localPath := range resources {
-			err := tgzw.AddFile(localPath, name)
-			if err != nil {
-				tgzw.Close()
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 //Initialise the generation parameters for a given architecture
-func (pkg *BinaryPackage) InitBinaryArtifact(arch Architecture) *BinaryArtifact {
-	targetFile := filepath.Join(pkg.DestDir, fmt.Sprintf("%s_%s_%s.deb", pkg.Name, pkg.Version, arch)) //goxc_0.5.2_i386.deb")
+func (pkg *BinaryPackage) InitBinaryArtifact(arch Architecture, build *BuildParams) *BinaryArtifact {
+	targetFile := filepath.Join(build.DestDir, fmt.Sprintf("%s_%s_%s.deb", pkg.Name, pkg.Version, arch)) //goxc_0.5.2_i386.deb")
 	if pkg.BinaryArtifacts == nil {
 		pkg.BinaryArtifacts = []*BinaryArtifact{}
 	}
-	if pkg.IsVerbose {
+	if build.IsVerbose {
 		log.Printf("prepared for arch %s", arch)
 	}
-	platform := NewBinaryArtifact(arch, targetFile, pkg.TmpDir, pkg.IsVerbose)
+	platform := NewBinaryArtifact(arch, targetFile, build.TmpDir, build.IsVerbose)
 	pkg.BinaryArtifacts = append(pkg.BinaryArtifacts, platform)
 	return platform
 }
@@ -253,10 +153,4 @@ func (pkg *BinaryPackage) getBinaryArtifact(arch Architecture) *BinaryArtifact {
 	return nil
 }
 
-func (pkg *BinaryPackage) BuildDebFile(archArtifact *BinaryArtifact) error {
-	if pkg.IsVerbose {
-		log.Printf("trying to write .deb file for %s", archArtifact.Architecture)
-	}
-	err := archArtifact.WriteAll()
-	return err
-}
+
