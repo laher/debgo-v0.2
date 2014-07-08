@@ -21,15 +21,17 @@ func Example_binaryPackage() {
 	if err != nil {
 		log.Fatalf("Error building binary: %v", err)
 	}
-	platform64 := artifacts[deb.Arch_amd64]
-	platform64.Binaries = map[string]string{"/usr/bin/a": "_test/a.amd64"}
-	artifacts[deb.Arch_i386].Binaries = map[string]string{"/usr/bin/a": "_test/a.x86"}
-	artifacts[deb.Arch_armel].Binaries = map[string]string{"/usr/bin/a": "_test/a.armel"}
+	artifacts[deb.Arch_amd64].Binaries = map[string]string{"/usr/bin/a": "_test/a.amd64"}
+	artifacts[deb.Arch_i386].Binaries = map[string]string{"/usr/bin/a": "_test/a.i386"}
+	artifacts[deb.Arch_armhf].Binaries = map[string]string{"/usr/bin/a": "_test/a.armhf"}
 
 	prep() //prepare files for packaging using some other means.
-	err = bpkg.Build(build, debgen.GenBinaryArtifact)
-	if err != nil {
-		log.Fatalf("Error building binary: %v", err)
+
+	for arch, artifact := range artifacts {
+		err = debgen.GenBinaryArtifact(artifact, build)
+		if err != nil {
+			log.Fatalf("Error building for '%s': %v", arch, err)
+		}
 	}
 
 	// Output:
@@ -62,7 +64,7 @@ func prep() error {
 	exesMap := map[string][]string{
 		"amd64": []string{"_test/a.amd64"},
 		"i386":  []string{"_test/a.i386"},
-		"armel": []string{"_test/a.armel"}}
+		"armhf": []string{"_test/a.armhf"}}
 	err := createExes(exesMap)
 	if err != nil {
 		log.Fatalf("%v", err)

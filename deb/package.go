@@ -31,7 +31,7 @@ type Package struct {
 
 	AdditionalControlData map[string]string // Other key/values to go into the Control file.
 
-	Architecture string // Supported values: "all", "x386", "amd64", "armel"
+	Architecture string // Supported values: "all", "x386", "amd64", "armhf". TODO: armel
 
 	Depends      string // Depends
 	BuildDepends string // BuildDepends is only required for "sourcedebs".

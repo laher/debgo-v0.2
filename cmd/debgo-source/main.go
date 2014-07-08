@@ -14,7 +14,7 @@ func main() {
 	pkg := debgen.NewGoPackage("", "", "")
 	build := deb.NewBuildParams()
 	fs := cmdutils.InitFlags(name, pkg, build)
-	fs.StringVar(&pkg.Architecture, "arch", "all", "Architectures [any,386,armel,amd64,all]")
+	fs.StringVar(&pkg.Architecture, "arch", "all", "Architectures [any,386,armhf,amd64,all]")
 
 	var sourceDir string
 	var glob string

@@ -21,7 +21,7 @@ func main() {
 	var binDir string
 	var resourcesDir string
 	fs.StringVar(&binDir, "binaries", "", "directory containing binaries for each architecture. Directory names should end with the architecture")
-	fs.StringVar(&pkg.Architecture, "arch", "any", "Architectures [any,386,armel,amd64,all]")
+	fs.StringVar(&pkg.Architecture, "arch", "any", "Architectures [any,386,armhf,amd64,all]")
 	fs.StringVar(&resourcesDir, "resources", "", "directory containing resources for this platform")
 	err := cmdutils.ParseFlags(name, pkg, fs)
 	if err != nil {

@@ -17,7 +17,6 @@
 package deb
 
 import (
-	"os"
 	"path/filepath"
 )
 
@@ -49,7 +48,7 @@ func (pkg *BinaryPackage) GetArtifacts() (map[Architecture]*BinaryArtifact, erro
 	}
 	return ret, nil
 }
-
+/*
 // Builds debs for all arches.
 func (pkg *BinaryPackage) Build(build *BuildParams, buildFunc BuildBinaryArtifactFunc) error {
 	if buildFunc == nil {
@@ -77,6 +76,7 @@ func (pkg *BinaryPackage) Build(build *BuildParams, buildFunc BuildBinaryArtifac
 	}
 	return nil
 }
+*/
 
 // Builds debs for a single architecture. Assumes default behaviours of a typical Go package.
 // This allows for a limited amount of flexibility (e.g. the use of templates for metadata files).
