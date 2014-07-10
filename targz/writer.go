@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package deb
+package targz
 
 import (
 	"archive/tar"
@@ -22,61 +22,36 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
-	"time"
 )
 
-// TarGzWriter encapsulates the tar, gz and file operations of a TarGz file
-type TarGzWriter struct {
+// Writer encapsulates the tar, gz and file operations of a TarGz file
+type Writer struct {
 	Filename string         // Filename
-	Fw       io.WriteCloser // File writer
+	Fw       io.Writer // File writer
 	Tw       *tar.Writer    // Tar writer (wraps the io.writer)
 	Gw       *gzip.Writer   // Gzip writer (wraps the tar writer)
 }
 
-// NewTarHeader is a factory for a tar header. Fixes slashes, populates ModTime
-func NewTarHeader(path string, datalen int64, mode int64) *tar.Header {
-	h := new(tar.Header)
-	//slash-only paths
-	h.Name = strings.Replace(path, "\\", "/", -1)
-	h.Size = datalen
-	h.Mode = mode
-	h.ModTime = time.Now()
-	return h
-}
-
-// Create creates the file on disk, and wraps the os.File with a Tar writer and Gzip writer
-func (tgzw *TarGzWriter) Create() error {
-	var err error
-	tgzw.Fw, err = os.Create(tgzw.Filename)
-	if err != nil {
-		return err
-	}
-	// gzip write
-	tgzw.Gw = gzip.NewWriter(tgzw.Fw)
-	// tar write
-	tgzw.Tw = tar.NewWriter(tgzw.Gw)
-	return nil
-}
-
 // Close closes all 3 writers
 // Returns the first error
-func (tgzw *TarGzWriter) Close() error {
+// TODO: close Fw if possible!
+func (tgzw *Writer) Close() error {
 	err1 := tgzw.Tw.Close()
 	err2 := tgzw.Gw.Close()
-	err3 := tgzw.Fw.Close()
+	//err3 := tgzw.Fw.Close()
 	if err1 != nil {
 		return fmt.Errorf("Error closing Tar Writer %v", err1)
 	}
 	if err2 != nil {
 		return fmt.Errorf("Error closing Gzip Writer %v", err2)
 	}
-	return err3
+	//return err3
+	return nil
 }
 
 // AddFile adds a file from the file system
 // This is just a helper function
-func (tgzw *TarGzWriter) AddFile(sourceFile, destName string) error {
+func (tgzw *Writer) AddFile(sourceFile, destName string) error {
 	fi, err := os.Open(sourceFile)
 	if err != nil {
 		return err
@@ -98,7 +73,7 @@ func (tgzw *TarGzWriter) AddFile(sourceFile, destName string) error {
 
 // AddFiles adds resources from file system.
 // The key should be the destination filename. Value is the local filesystem path
-func (tgzw *TarGzWriter) AddFiles(resources map[string]string) error {
+func (tgzw *Writer) AddFiles(resources map[string]string) error {
 	if resources != nil {
 		for name, localPath := range resources {
 			err := tgzw.AddFile(localPath, name)
@@ -112,7 +87,7 @@ func (tgzw *TarGzWriter) AddFiles(resources map[string]string) error {
 }
 
 // AddBytes adds a file by bytes
-func (tgzw *TarGzWriter) AddBytes(bytes []byte, destName string, mode int64) error {
+func (tgzw *Writer) AddBytes(bytes []byte, destName string, mode int64) error {
 	err := tgzw.Tw.WriteHeader(NewTarHeader(destName, int64(len(bytes)), mode))
 	if err != nil {
 		return err
@@ -124,9 +99,27 @@ func (tgzw *TarGzWriter) AddBytes(bytes []byte, destName string, mode int64) err
 	return nil
 }
 
-// NewTarGzWriter is a factory for TarGzWriter
-func NewTarGzWriter(archiveFilename string) (*TarGzWriter, error) {
-	tgzw := &TarGzWriter{Filename: archiveFilename}
-	err := tgzw.Create()
+// NewWriter is a factory for Writer
+func NewWriterFromFile(archiveFilename string) (*Writer, error) {
+	fw, err := os.Create(archiveFilename)
+	if err != nil {
+		return nil, err
+	}
+	tgzw := NewWriter(fw)
+	tgzw.Filename = archiveFilename
 	return tgzw, err
 }
+
+
+// Create creates the file on disk, and 
+// wraps the io.Writer with a Tar writer and Gzip writer
+func NewWriter(w io.Writer) *Writer {
+	
+	tgzw := &Writer{Fw: w}
+	// gzip writer
+	tgzw.Gw = gzip.NewWriter(tgzw.Fw)
+	// tar writer
+	tgzw.Tw = tar.NewWriter(tgzw.Gw)
+	return tgzw
+}
+

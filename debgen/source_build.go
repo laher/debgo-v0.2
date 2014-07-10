@@ -19,6 +19,7 @@ package debgen
 import (
 	"fmt"
 	"github.com/laher/debgo-v0.2/deb"
+	"github.com/laher/debgo-v0.2/targz"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -50,7 +51,7 @@ func GenSourceArtifacts(spkg *deb.SourcePackage, build *deb.BuildParams) error {
 func BuildSourceOrigArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildParams) error {
 	//TODO add/exclude resources to /usr/share
 	origFilePath := filepath.Join(build.DestDir, spkg.OrigFileName)
-	tgzw, err := deb.NewTarGzWriter(origFilePath)
+	tgzw, err := targz.NewWriterFromFile(origFilePath)
 	if err != nil {
 		return err
 	}
@@ -76,7 +77,7 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 	templateVars := NewTemplateData(spkg.Package)
 
 	// generate .debian.tar.gz (just containing debian/ directory)
-	tgzw, err := deb.NewTarGzWriter(filepath.Join(build.DestDir, spkg.DebianFileName))
+	tgzw, err := targz.NewWriterFromFile(filepath.Join(build.DestDir, spkg.DebianFileName))
 	templateDir := filepath.Join(build.TemplateDir, "source", "debian")
 	//debian/control
 	controlData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "control.tpl"), TemplateSourcedebControl, templateVars)
@@ -201,7 +202,7 @@ func BuildDscFileDefault(spkg *deb.SourcePackage, build *deb.BuildParams) error 
 }
 
 // TODO: unfinished: need to discover root dir to determine which dirs to pre-make.
-func AddSources(spkg *deb.SourcePackage, codeDir, destinationPrefix string, tgzw *deb.TarGzWriter, build *deb.BuildParams) error {
+func AddSources(spkg *deb.SourcePackage, codeDir, destinationPrefix string, tgzw *targz.Writer, build *deb.BuildParams) error {
 	goPathRootTemp := GetGoPathElement(codeDir)
 	goPathRoot, err := filepath.EvalSymlinks(goPathRootTemp)
 	if err != nil {

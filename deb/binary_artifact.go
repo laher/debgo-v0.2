@@ -19,6 +19,7 @@ package deb
 import (
 	"fmt"
 	"github.com/laher/argo/ar"
+	"github.com/laher/debgo-v0.2/targz"
 	"io"
 	"os"
 	"path/filepath"
@@ -43,9 +44,9 @@ func NewBinaryArtifact(binaryPackage *BinaryPackage, architecture Architecture) 
 }
 
 // InitControlArchive initialises and returns the 'control.tar.gz' archive
-func (pkg *BinaryPackage) InitControlArchive(build *BuildParams) (*TarGzWriter, error) {
+func (pkg *BinaryPackage) InitControlArchive(build *BuildParams) (*targz.Writer, error) {
 	archiveFilename := filepath.Join(build.TmpDir, "control.tar.gz")
-	tgzw, err := NewTarGzWriter(archiveFilename)
+	tgzw, err := targz.NewWriterFromFile(archiveFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -53,15 +54,16 @@ func (pkg *BinaryPackage) InitControlArchive(build *BuildParams) (*TarGzWriter, 
 }
 
 // InitDataArchive initialises and returns the 'data.tar.gz' archive
-func (pkg *BinaryPackage) InitDataArchive(build *BuildParams) (*TarGzWriter, error) {
-	archiveFilename := filepath.Join(build.TmpDir, "data.tar.gz")
-	tgzw, err := NewTarGzWriter(archiveFilename)
+func (pkg *BinaryPackage) InitDataArchive(build *BuildParams) (*targz.Writer, error) {
+	archiveFilename := filepath.Join(build.TmpDir, BinaryDataArchiveNameDefault)
+	tgzw, err := targz.NewWriterFromFile(archiveFilename)
 	if err != nil {
 		return nil, err
 	}
 	return tgzw, err
 }
 
+// GetReader opens up a new .ar reader
 func (bdeb *BinaryArtifact) GetReader() (*ar.Reader, error) {
 	fi, err := os.Open(bdeb.Filename)
 	if err != nil {
@@ -114,8 +116,8 @@ func (bdeb *BinaryArtifact) ExtractAll(build *BuildParams) ([]string, error) {
 func (bdeb *BinaryArtifact) SetDefaults() {
 	bdeb.Filename = fmt.Sprintf("%s_%s_%s.deb", bdeb.Name, bdeb.Version, bdeb.Architecture) //goxc_0.5.2_i386.deb")
 	bdeb.DebianBinaryVersion = DebianBinaryVersionDefault
-	bdeb.ControlArchFile = "control.tar.gz"
-	bdeb.DataArchFile = "data.tar.gz"
+	bdeb.ControlArchFile = BinaryControlArchiveNameDefault
+	bdeb.DataArchFile = BinaryDataArchiveNameDefault
 }
 
 func (bdeb *BinaryArtifact) WriteBytes(aw *ar.Writer, filename string, bytes []byte) error {

@@ -22,6 +22,8 @@ const (
 	WorkingDirDefault   = "."
 
 	ExeDirDefault = "/usr/bin" //default directory for exes within the control archive
+	BinaryDataArchiveNameDefault = "data.tar.gz"
+	BinaryControlArchiveNameDefault = "control.tar.gz"
 )
 
 var (

@@ -10,7 +10,7 @@ import (
 
 func Example_binaryPackage() {
 
-	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing")
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing\n")
 
 	build := deb.NewBuildParams()
 	build.IsRmtemp = false
@@ -37,26 +37,6 @@ func Example_binaryPackage() {
 	//
 }
 
-func Example_devPackage() {
-	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing")
-
-	ddpkg := deb.NewDevPackage(pkg)
-	build := deb.NewBuildParams()
-	build.IsRmtemp = false
-	var err error
-	build.Resources, err = debgen.GlobForGoSources(".", []string{build.TmpDir, build.DestDir})
-	if err != nil {
-		log.Fatalf("Error building -dev: %v", err)
-	}
-
-	err = debgen.GenDevArtifact(ddpkg, build)
-	if err != nil {
-		log.Fatalf("Error building -dev: %v", err)
-	}
-
-	// Output:
-	//
-}
 
 func prep() error {
 	exesMap := map[string][]string{

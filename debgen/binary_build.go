@@ -18,6 +18,7 @@ package debgen
 
 import (
 	"github.com/laher/debgo-v0.2/deb"
+	"github.com/laher/debgo-v0.2/targz"
 	"log"
 	"os"
 	"path/filepath"
@@ -120,7 +121,7 @@ func GenDataArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (s
 	return dataTgzw.Filename, err
 }
 
-func GenControlFile(tgzw *deb.TarGzWriter, templateVars *TemplateData, build *deb.BuildParams) error {
+func GenControlFile(tgzw *targz.Writer, templateVars *TemplateData, build *deb.BuildParams) error {
 	controlData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "control.tpl"), TemplateBinarydebControl, templateVars)
 	if err != nil {
 		return err

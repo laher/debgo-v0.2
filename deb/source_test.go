@@ -2,6 +2,7 @@ package deb_test
 
 import (
 	"github.com/laher/debgo-v0.2/deb"
+	"github.com/laher/debgo-v0.2/targz"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -50,7 +51,7 @@ func Test_buildSourceDeb(t *testing.T) {
 
 func buildOrigArchive(spkg *deb.SourcePackage, build *deb.BuildParams) error {
 	origFilePath := filepath.Join(build.DestDir, spkg.OrigFileName)
-	tgzw, err := deb.NewTarGzWriter(origFilePath)
+	tgzw, err := targz.NewWriterFromFile(origFilePath)
 	if err != nil {
 		return err
 	}
@@ -63,7 +64,7 @@ func buildOrigArchive(spkg *deb.SourcePackage, build *deb.BuildParams) error {
 }
 
 func buildDebianArchive(spkg *deb.SourcePackage, build *deb.BuildParams) error {
-	tgzw, err := deb.NewTarGzWriter(filepath.Join(build.DestDir, spkg.DebianFileName))
+	tgzw, err := targz.NewWriterFromFile(filepath.Join(build.DestDir, spkg.DebianFileName))
 	if err != nil {
 		return err
 	}
