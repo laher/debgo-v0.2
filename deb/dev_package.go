@@ -16,57 +16,28 @@
 
 package deb
 
-import (
-//	"fmt"
-//	"path/filepath"
-)
-
-// BuildDevPackageFunc specifies a function which can build a DevPackage
-//type BuildDevPackageFunc func(*DevPackage, *BuildParams) error
-
-// *DevPackage builds a sources-only '-dev' package, which can be used as a BuildDepends dependency.
+// DevPackage builds a '-dev' package, which itself should just contain the sources to use this package as a BuildDepends dependency.
 // For pure Go packages, this can be cross-platform (architecture == 'all'), but in some cases it might need to be architecture specific
 type DevPackage struct {
 	*Package
-	//DebFilePath   string
 	BinaryPackage *BinaryPackage
-	//	BuildFunc     BuildDevPackageFunc
 }
 
-// Factory for DevPackage
+// NewDevPackage is a factory for DevPackage
 func NewDevPackage(pkg *Package) *DevPackage {
 	//debPath := filepath.Join(pkg.DestDir, pkg.Name+"-dev_"+pkg.Version+".deb")
 	ddpkg := &DevPackage{Package: pkg} //		DebFilePath: debPath,
-	//		BuildFunc: buildFunc
-
 	return ddpkg
 }
 
+// InitBinaryPackage initialises the binary package for -dev.deb packages
 func (ddpkg *DevPackage) InitBinaryPackage() {
 	if ddpkg.BinaryPackage == nil {
 		//TODO *complete* copy of properties, using reflection?
-		devpkg := NewPackage(ddpkg.Name+"-dev", ddpkg.Version, ddpkg.Maintainer)
+		devpkg := NewPackage(ddpkg.Name+"-dev", ddpkg.Version, ddpkg.Maintainer, ddpkg.Description)
 		devpkg.Description = ddpkg.Description
-		devpkg.MaintainerEmail = ddpkg.MaintainerEmail
 		devpkg.AdditionalControlData = ddpkg.AdditionalControlData
 		devpkg.Architecture = "all"
-		//devpkg.IsVerbose = ddpkg.IsVerbose
-		//devpkg.IsRmtemp = ddpkg.IsRmtemp
 		ddpkg.BinaryPackage = NewBinaryPackage(devpkg)
 	}
-	/*
-		if ddpkg.BinaryPackage.Resources == nil {
-			ddpkg.BinaryPackage.Resources = map[string]string{}
-		}
-	*/
 }
-
-/*
-// Invokes the BuildFunc
-func (ddpkg *DevPackage) Build(build *BuildParams) error {
-	if ddpkg.BuildFunc == nil {
-		return fmt.Errorf("No build function provided (*DevPackage.BuildFunc)")
-	}
-	return ddpkg.BuildFunc(ddpkg, build)
-}
-*/

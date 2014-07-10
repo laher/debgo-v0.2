@@ -87,12 +87,11 @@ func GetGoPathElement(workingDirectory string) string {
 
 // Glob for Go-specific sources
 func GlobForGoSources(sourcesDir string, ignore []string) (map[string]string, error) {
-	destinationDir := DEVDEB_GO_PATH_DEFAULT
+	destinationDir := DevGoPathDefault
 	sourcesRelativeTo := GetGoPathElement(sourcesDir)
-	resources, err := GlobForSources(sourcesRelativeTo, sourcesDir, GLOB_GO_SOURCES, destinationDir, ignore)
+	resources, err := GlobForSources(sourcesRelativeTo, sourcesDir, GlobGoSources, destinationDir, ignore)
 	return resources, err
 }
-
 
 // Glob for sources.
 // This function looks for source files, and prepares their paths for

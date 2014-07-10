@@ -8,8 +8,7 @@ import (
 
 func Example_sourcePackage() {
 
-	pkg := deb.NewPackage("testpkg", "0.0.2", "me")
-	pkg.Description = "Dummy package for doing nothing"
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing")
 
 	spkg := deb.NewSourcePackage(pkg)
 	build := deb.NewBuildParams()

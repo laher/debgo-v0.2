@@ -16,10 +16,6 @@
 
 package deb
 
-import (
-	"path/filepath"
-)
-
 // BuildDevPackageFunc specifies a function which can build a DevPackage
 type BuildBinaryArtifactFunc func(*BinaryArtifact, *BuildParams) error
 
@@ -27,15 +23,16 @@ type BuildBinaryArtifactFunc func(*BinaryArtifact, *BuildParams) error
 // This encapsulates a Package plus information about platform-specific debs and executables
 type BinaryPackage struct {
 	*Package
-	ExeDest         string
-//	BinaryArtifacts []*BinaryArtifact //BinaryArtifact-specific builds
+	ExeDest string
 }
 
-// Factory for BinaryPackage
+// NewBinaryPackage is a factory for BinaryPackage
 func NewBinaryPackage(pkg *Package) *BinaryPackage {
 	return &BinaryPackage{Package: pkg, ExeDest: "/usr/bin"}
 }
 
+// GetArtifacts gets and returns an artifact for each architecture.
+// Returns an error if the package's architecture is un-parseable
 func (pkg *BinaryPackage) GetArtifacts() (map[Architecture]*BinaryArtifact, error) {
 	arches, err := pkg.GetArches()
 	if err != nil {
@@ -43,114 +40,8 @@ func (pkg *BinaryPackage) GetArtifacts() (map[Architecture]*BinaryArtifact, erro
 	}
 	ret := map[Architecture]*BinaryArtifact{}
 	for _, arch := range arches {
-		archArtifact := pkg.GetBinaryArtifact(arch)
+		archArtifact := NewBinaryArtifact(pkg, arch)
 		ret[arch] = archArtifact
 	}
 	return ret, nil
 }
-/*
-// Builds debs for all arches.
-func (pkg *BinaryPackage) Build(build *BuildParams, buildFunc BuildBinaryArtifactFunc) error {
-	if buildFunc == nil {
-		return ErrNoBuildFunc
-	}
-	archArtifacts, err := pkg.GetArtifacts()
-	if err != nil {
-		return err
-	}
-	err = build.Init()
-	if err != nil {
-		return err
-	}
-
-	for _, archArtifact := range archArtifacts {
-		err = buildFunc(archArtifact, build)
-		//even with an error, remove temp
-		if build.IsRmtemp {
-			os.RemoveAll(build.TmpDir)
-
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-*/
-
-// Builds debs for a single architecture. Assumes default behaviours of a typical Go package.
-// This allows for a limited amount of flexibility (e.g. the use of templates for metadata files).
-// To get full flexibility, please use the more granular methods to return archives and add manual work
-func (pkg *BinaryPackage) GetBinaryArtifact(arch Architecture) *BinaryArtifact {
-	//platform := pkg.getBinaryArtifact(arch)
-	/*	if platform == nil {
-		platform = pkg.InitBinaryArtifact(arch)
-	}*/
-	platform := NewBinaryArtifact(pkg, arch)
-	return platform
-}
-
-// Initialise and return the 'control.tar.gz' archive
-func (pkg *BinaryPackage) InitControlArchive(build *BuildParams) (*TarGzWriter, error) {
-	archiveFilename := filepath.Join(build.TmpDir, "control.tar.gz")
-	tgzw, err := NewTarGzWriter(archiveFilename)
-	if err != nil {
-		return nil, err
-	}
-	return tgzw, err
-}
-
-// Initialise and return the 'data.tar.gz' archive
-func (pkg *BinaryPackage) InitDataArchive(build *BuildParams) (*TarGzWriter, error) {
-	archiveFilename := filepath.Join(build.TmpDir, "data.tar.gz")
-	tgzw, err := NewTarGzWriter(archiveFilename)
-	if err != nil {
-		return nil, err
-	}
-	return tgzw, err
-}
-
-// Add executables from file system.
-// Be careful to make sure these are the relevant executables for the correct architecture
-func (pkg *BinaryPackage) AddExecutablesByFilepath(executablePaths []string, tgzw *TarGzWriter) error {
-	return pkg.AddFilesByFilepath(pkg.ExeDest, executablePaths, tgzw)
-}
-
-func (pkg *BinaryPackage) AddFilesByFilepath(destinationDir string, executablePaths []string, tgzw *TarGzWriter) error {
-	if executablePaths != nil {
-		for _, executable := range executablePaths {
-
-			exeName := filepath.Join(destinationDir, filepath.Base(executable))
-			err := tgzw.AddFile(executable, exeName)
-			if err != nil {
-				tgzw.Close()
-				return err
-			}
-		}
-	}
-	return nil
-}
-/*
-//Initialise the generation parameters for a given architecture
-func (pkg *BinaryPackage) InitBinaryArtifact(arch Architecture) *BinaryArtifact {
-	if pkg.BinaryArtifacts == nil {
-		pkg.BinaryArtifacts = []*BinaryArtifact{}
-	}
-	platform := NewBinaryArtifact(pkg, arch, targetFile)
-	pkg.BinaryArtifacts = append(pkg.BinaryArtifacts, platform)
-	return platform
-}
-
-// get the generation parameters for a given architecture
-func (pkg *BinaryPackage) getBinaryArtifact(arch Architecture) *BinaryArtifact {
-	if pkg.BinaryArtifacts == nil {
-		pkg.BinaryArtifacts = []*BinaryArtifact{}
-	}
-	for _, platform := range pkg.BinaryArtifacts {
-		if platform.Architecture == arch {
-			return platform
-		}
-	}
-	return nil
-}
-*/

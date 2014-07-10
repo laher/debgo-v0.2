@@ -38,10 +38,11 @@ type BuildParams struct {
 func NewBuildParams() *BuildParams {
 	pb := &BuildParams{IsVerbose: false}
 
-	pb.TmpDir = TEMP_DIR_DEFAULT
-	pb.DestDir = DIST_DIR_DEFAULT
+	pb.TmpDir = TempDirDefault
 	pb.IsRmtemp = true
-	pb.WorkingDir = WORKING_DIR_DEFAULT
+	pb.DestDir = DistDirDefault
+	pb.WorkingDir = WorkingDirDefault
+	pb.TemplateDir = TemplateDirDefault
 	pb.Resources = map[string]string{}
 	return pb
 }

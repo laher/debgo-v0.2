@@ -1,21 +1,40 @@
-package deb
+package deb_test
 
 import (
+	"github.com/laher/debgo-v0.2/deb"
 	"log"
+	"testing"
 )
 
 func Example_buildDevPackage() {
 
-	pkg := NewPackage("testpkg", "0.0.2", "me")
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "A package\ntestpkg is a lovel package with many wow")
 	pkg.Description = "hiya"
-	bp := NewBuildParams()
-	buildFunc := func(dpkg *DevPackage, bp *BuildParams) error {
+	bp := deb.NewBuildParams()
+	buildFunc := func(dpkg *deb.DevPackage, bp *deb.BuildParams) error {
 		// Generate files here.
 		return nil
 	}
-	dpkg := NewDevPackage(pkg)
+	dpkg := deb.NewDevPackage(pkg)
 	err := buildFunc(dpkg, bp)
 	if err != nil {
 		log.Fatalf("%v", err)
+	}
+}
+
+func Test_buildDevPackage(t *testing.T) {
+
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "A package\ntestpkg is a lovel package with many wow")
+	pkg.Description = "hiya"
+	bp := deb.NewBuildParams()
+	bp.Init()
+	buildFunc := func(dpkg *deb.DevPackage, bp *deb.BuildParams) error {
+		// Generate files here.
+		return nil
+	}
+	dpkg := deb.NewDevPackage(pkg)
+	err := buildFunc(dpkg, bp)
+	if err != nil {
+		t.Fatalf("%v", err)
 	}
 }

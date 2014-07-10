@@ -16,10 +16,7 @@
 
 package deb
 
-// Function type to allow customized build process
-//type BuildSourcePackageFunc func(spkg *SourcePackage, build *BuildParams) error
-
-// The source package is a cross-platform package with a .dsc file.
+// SourcePackage is a cross-platform package with a .dsc file.
 type SourcePackage struct {
 	*Package
 	DscFileName    string
@@ -28,7 +25,7 @@ type SourcePackage struct {
 	//BuildFunc      BuildSourcePackageFunc
 }
 
-// Factory for a source package. Sets up default paths..
+// NewSourcePackage is a factory for SourcePackage. Sets up default paths..
 // Initialises default filenames, using .tar.gz as the archive type
 func NewSourcePackage(pkg *Package) *SourcePackage {
 	spkg := &SourcePackage{Package: pkg}
@@ -37,76 +34,3 @@ func NewSourcePackage(pkg *Package) *SourcePackage {
 	spkg.DebianFileName = spkg.Name + "_" + spkg.Version + ".debian.tar.gz"
 	return spkg
 }
-
-/*
-func (spkg *SourcePackage) CopySourceRecurse(codeDir, destDir string) (err error) {
-	if spkg.IsVerbose {
-		log.Printf("Globbing %s", codeDir)
-	}
-	//get all files and copy into destDir
-	matches, err := filepath.Glob(filepath.Join(codeDir, "*.go"))
-	if err != nil {
-		return err
-	}
-	if len(matches) > 0 {
-		err = os.MkdirAll(destDir, 0777)
-		if err != nil {
-			return err
-		}
-	}
-	for _, match := range matches {
-		if spkg.IsVerbose {
-			log.Printf("copying %s into %s", match, filepath.Join(destDir, filepath.Base(match)))
-		}
-		r, err := os.Open(match)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			err := r.Close()
-			if err != nil {
-				panic(err)
-			}
-		}()
-		w, err := os.Create(filepath.Join(destDir, filepath.Base(match)))
-		if err != nil {
-			return err
-		}
-		defer func() {
-			err := w.Close()
-			if err != nil {
-				panic(err)
-			}
-		}()
-
-		_, err = io.Copy(w, r)
-		if err != nil {
-			return err
-		}
-	}
-	fis, err := ioutil.ReadDir(codeDir)
-	for _, fi := range fis {
-		if spkg.IsVerbose {
-			log.Printf("Comparing fi.Name %s with tmpdir %v", fi.Name(), spkg.Package)
-		}
-		if fi.IsDir() && fi.Name() != spkg.TmpDir {
-			err = spkg.CopySourceRecurse(filepath.Join(codeDir, fi.Name()), filepath.Join(destDir, fi.Name()))
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (spkg *SourcePackage) Init(build *BuildParams) error {
-	//build
-	//1. prepare destination
-	err := os.MkdirAll(build.DestDir, 0777)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-*/

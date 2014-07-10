@@ -1,19 +1,20 @@
-package deb
+package deb_test
 
 import (
+	"github.com/laher/debgo-v0.2/deb"
+	"log"
 	"os"
 	"path/filepath"
-	"testing"
 )
 
-func Example_buildBinaryDeb(t *testing.T) {
+func Example_buildBinaryDeb() {
 
-	pkg := NewPackage("testpkg", "0.0.2", "me")
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "lovely package")
 	pkg.Description = "hiya"
-	bp := NewBuildParams()
-	err := bp.Init()
+	build := deb.NewBuildParams()
+	err := build.Init()
 	if err != nil {
-		t.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 	}
 
 	exesMap := map[string][]string{
@@ -22,23 +23,26 @@ func Example_buildBinaryDeb(t *testing.T) {
 		"armhf": []string{"_test/a.armhf"}}
 	err = createExes(exesMap)
 	if err != nil {
-		t.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 	}
-	bpkg := NewBinaryPackage(pkg)
-	platform64 := bpkg.InitBinaryArtifact(Arch_amd64, bp)
-	platform64.Executables = []string{"_test/a.amd64"}
-	platform386 := bpkg.InitBinaryArtifact(Arch_i386, bp)
-	platform386.Executables = []string{"_test/a.i386"}
-	platformArm := bpkg.InitBinaryArtifact(Arch_armhf, bp)
-	platformArm.Executables = []string{"_test/a.armhf"}
-
-	buildFunc := func(pkg *BinaryPackage, arch *BinaryArtifact, build *BuildParams) error {
-		//Per-platform build logic goes here
+	bpkg := deb.NewBinaryPackage(pkg)
+	artifacts, err := bpkg.GetArtifacts()
+	if err != nil {
+		log.Fatalf("Error building binary: %v", err)
+	}
+	artifacts[deb.Arch_amd64].Binaries = map[string]string{"/usr/bin/a": "_test/a.amd64"}
+	artifacts[deb.Arch_i386].Binaries = map[string]string{"/usr/bin/a": "_test/a.i386"}
+	artifacts[deb.Arch_armhf].Binaries = map[string]string{"/usr/bin/a": "_test/a.armhf"}
+	buildBinaryArtifact := func(art *deb.BinaryArtifact, build *deb.BuildParams) error {
+		//generate artifact here ...
 		return nil
 	}
-	err = bpkg.Build(bp, buildFunc)
-	if err != nil {
-		t.Fatalf("%v", err)
+	for arch, artifact := range artifacts {
+		//build binary deb here ...
+		err = buildBinaryArtifact(artifact, build)
+		if err != nil {
+			log.Fatalf("Error building for '%s': %v", arch, err)
+		}
 	}
 }
 

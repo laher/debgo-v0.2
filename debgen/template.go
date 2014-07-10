@@ -26,43 +26,16 @@ import (
 
 // initialize "template data" object
 func NewTemplateData(pkg *deb.Package) *TemplateData {
-	templateVars := TemplateData{pkg.Name, pkg.Version, pkg.Maintainer, pkg.MaintainerEmail, pkg.Architecture,
-		pkg.Section,
-		pkg.Depends,
-		pkg.BuildDepends,
-		pkg.Priority,
-		pkg.Description,
-		pkg.StandardsVersion,
-		"",
-		pkg.Status,
-		"",
-		pkg.Format,
-		pkg.AdditionalControlData,
-		pkg.ExtraData,
-		nil}
+	templateVars := TemplateData{Package: pkg, EntryDate: "", Checksums: nil}
 	return &templateVars
 }
 
 //Data for templates
 type TemplateData struct {
-	PackageName           string
-	PackageVersion        string
-	Maintainer            string
-	MaintainerEmail       string
-	Architecture          string
-	Section               string
-	Depends               string
-	BuildDepends          string
-	Priority              string
-	Description           string
-	StandardsVersion      string
-	Other                 string
-	Status                string
-	EntryDate             string
-	Format                string
-	AdditionalControlData map[string]string
-	ExtraData             map[string]interface{}
-	Checksums             *deb.Checksums
+	Package        *deb.Package
+	BinaryArtifact *deb.BinaryArtifact
+	EntryDate      string
+	Checksums      *deb.Checksums
 }
 
 func ProcessTemplateFileOrString(templateFile string, templateDefault string, vars interface{}) ([]byte, error) {

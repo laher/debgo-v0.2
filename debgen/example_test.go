@@ -10,8 +10,7 @@ import (
 
 func Example_binaryPackage() {
 
-	pkg := deb.NewPackage("testpkg", "0.0.2", "me")
-	pkg.Description = "Dummy package for doing nothing"
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing")
 
 	build := deb.NewBuildParams()
 	build.IsRmtemp = false
@@ -39,8 +38,7 @@ func Example_binaryPackage() {
 }
 
 func Example_devPackage() {
-	pkg := deb.NewPackage("testpkg", "0.0.2", "me")
-	pkg.Description = "hiya"
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing")
 
 	ddpkg := deb.NewDevPackage(pkg)
 	build := deb.NewBuildParams()

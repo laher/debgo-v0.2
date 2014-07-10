@@ -17,9 +17,10 @@
 package debgen
 
 import (
-	"github.com/laher/debgo-v0.2/deb"
 	"fmt"
+	"github.com/laher/debgo-v0.2/deb"
 )
+
 /*
 // Generate artifacts for Go-specific packages
 func GenGoDevArtifact(ddpkg *deb.DevPackage, build *deb.BuildParams, sourcesDir string) error {

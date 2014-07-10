@@ -5,22 +5,22 @@ import (
 )
 
 const (
-	GLOB_GO_SOURCES = "*.go"
-	TEMPLATE_DEBIAN_SOURCE_FORMAT  = deb.FORMAT_DEFAULT                                     // Debian source formaat
-	TEMPLATE_DEBIAN_SOURCE_OPTIONS = `tar-ignore = .hg
+	GlobGoSources                = "*.go"
+	TemplateDebianSourceFormat  = deb.FormatDefault  // Debian source formaat
+	TemplateDebianSourceOptions = `tar-ignore = .hg
 tar-ignore = .git
 tar-ignore = .bzr` //specifies files to ignore while building.
 
 	// The debian rules file describes how to build a 'source deb' into a binary deb. The default template here invokes debhelper scripts to automate this process for simple cases.
-	TEMPLATE_DEBIAN_RULES = `#!/usr/bin/make -f
+	TemplateDebianRules = `#!/usr/bin/make -f
 # -*- makefile -*-
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-export GOPATH=$(CURDIR){{range $i, $gpe := .ExtraData.GoPathExtra }}:{{$gpe}}{{end}}
+export GOPATH=$(CURDIR){{range $i, $gpe := .Package.ExtraData.GoPathExtra }}:{{$gpe}}{{end}}
 
-PKGDIR=debian/{{.PackageName}}
+PKGDIR=debian/{{.Package.Name}}
 
 %:
 	dh $@
@@ -48,58 +48,59 @@ binary-arch: clean
 binary: binary-arch`
 
 	// The debian control file (binary debs) defines package metadata
-	TEMPLATE_BINARYDEB_CONTROL = `Package: {{.PackageName}}
-Priority: {{.Priority}}
-{{if .Maintainer}}Maintainer: {{.Maintainer}}
-{{end}}Section: {{.Section}}
-Version: {{.PackageVersion}}
-Architecture: {{.Architecture}}
-{{if .Depends}}Depends: {{.Depends}}
-{{end}}{{range $key, $value := .AdditionalControlData}}{{$key}}: {{$value}}
-{{end}}Description: {{.Description}}
+	TemplateBinarydebControl = `Package: {{.Package.Name}}
+Priority: {{.Package.Priority}}
+{{if .Package.Maintainer}}Maintainer: {{.Package.Maintainer}}
+{{end}}Section: {{.Package.Section}}
+Version: {{.Package.Version}}
+Architecture: {{.BinaryArtifact.Architecture}}
+{{if .Package.Depends}}Depends: {{.Package.Depends}}
+{{end}}{{range $key, $value := .Package.AdditionalControlData}}{{$key}}: {{$value}}
+{{end}}Description: {{.Package.Description}}
 `
 
 	// The debian control file (source debs) defines build metadata AND package metadata
-	TEMPLATE_SOURCEDEB_CONTROL = `Source: {{.PackageName}}
-Build-Depends: {{.BuildDepends}}
-Priority: {{.Priority}}
-Maintainer: {{.Maintainer}}
-Standards-Version: {{.StandardsVersion}}
-Section: {{.Section}}
+	TemplateSourcedebControl = `Source: {{.Package.Name}}
+Build-Depends: {{.Package.BuildDepends}}
+Priority: {{.Package.Priority}}
+Maintainer: {{.Package.Maintainer}}
+Standards-Version: {{.Package.StandardsVersion}}
+Section: {{.Package.Section}}
 
-Package: {{.PackageName}}
-Architecture: {{.Architecture}}
-Depends: ${misc:Depends}{{.Depends}}
-Description: {{.Description}}
-{{.Other}}`
+Package: {{.Package.Name}}
+Architecture: {{.Package.Architecture}}
+Depends: ${misc:Depends}{{.Package.Depends}}
+Description: {{.Package.Description}}
+{{.Package.Other}}`
 
 	// The dsc file defines package metadata AND checksums
-	TEMPLATE_DEBIAN_DSC = `Format: {{.Format}}
-Source: {{.PackageName}}
-Binary: {{.PackageName}}
-Architecture: {{.Architecture}}
-Version: {{.PackageVersion}}
-Maintainer: {{.Maintainer}}
-Standards-Version: {{.StandardsVersion}}
-Build-Depends: {{.BuildDepends}}
-Priority: {{.Priority}}
-Section: {{.Section}}
+	TemplateDebianDsc = `Format: {{.Package.Format}}
+Source: {{.Package.Name}}
+Binary: {{.Package.Name}}
+Architecture: {{.Package.Architecture}}
+Version: {{.Package.Version}}
+Maintainer: {{.Package.Maintainer}}
+Standards-Version: {{.Package.StandardsVersion}}
+Build-Depends: {{.Package.BuildDepends}}
+Priority: {{.Package.Priority}}
+Section: {{.Package.Section}}
 Checksums-Sha1:{{range .Checksums.ChecksumsSha1}}
  {{.Checksum}} {{.Size}} {{.File}}{{end}}
 Checksums-Sha256:{{range .Checksums.ChecksumsSha256}}
  {{.Checksum}} {{.Size}} {{.File}}{{end}}
 Files:{{range .Checksums.ChecksumsMd5}}
  {{.Checksum}} {{.Size}} {{.File}}{{end}}
-{{.Other}}`
+{{.Package.Other}}`
 
-	TEMPLATE_CHANGELOG_HEADER        = `{{.PackageName}} ({{.PackageVersion}}) {{.Status}}; urgency=low`
-	TEMPLATE_CHANGELOG_INITIAL_ENTRY = `  * Initial import`
-	TEMPLATE_CHANGELOG_FOOTER        = ` -- {{.Maintainer}} <{{.MaintainerEmail}}>  {{.EntryDate}}`
-	TEMPLATE_DEBIAN_COPYRIGHT        = `Copyright 2013 {{.PackageName}}`
-	TEMPLATE_DEBIAN_README           = `{{.PackageName}}
+	TemplateChangelogHeader        = `{{.Package.Name}} ({{.Package.Version}}) {{.Package.Status}}; urgency=low`
+	TemplateChangelogInitialEntry = `  * Initial import`
+	TemplateChangelogFooter        = ` -- {{.Package.Maintainer}} {{.EntryDate}}`
+	TemplateDebianCopyright        = `Copyright 2013 {{.Package.Name}}`
+	TemplateDebianReadme           = `{{.Package.Name}}
 ==========
 
 `
-	DEVDEB_GO_PATH_DEFAULT = "/usr/share/gocode" // This is used by existing -dev.deb packages e.g. golang-doozer-dev and golang-protobuf-dev
-	GO_PATH_EXTRA_DEFAULT  = ":" + DEVDEB_GO_PATH_DEFAULT
+	DevGoPathDefault = "/usr/share/gocode" // This is used by existing -dev.deb packages e.g. golang-doozer-dev and golang-protobuf-dev
+	GoPathExtraDefault  = ":" + DevGoPathDefault
 )
+

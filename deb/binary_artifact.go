@@ -32,7 +32,7 @@ type BinaryArtifact struct {
 	DebianBinaryVersion string
 	ControlArchFile     string
 	DataArchFile        string
-	Binaries         map[string]string
+	Binaries            map[string]string
 }
 
 // Factory of platform build information
@@ -40,6 +40,26 @@ func NewBinaryArtifact(binaryPackage *BinaryPackage, architecture Architecture) 
 	bdeb := &BinaryArtifact{BinaryPackage: binaryPackage, Architecture: architecture}
 	bdeb.SetDefaults()
 	return bdeb
+}
+
+// InitControlArchive initialises and returns the 'control.tar.gz' archive
+func (pkg *BinaryPackage) InitControlArchive(build *BuildParams) (*TarGzWriter, error) {
+	archiveFilename := filepath.Join(build.TmpDir, "control.tar.gz")
+	tgzw, err := NewTarGzWriter(archiveFilename)
+	if err != nil {
+		return nil, err
+	}
+	return tgzw, err
+}
+
+// InitDataArchive initialises and returns the 'data.tar.gz' archive
+func (pkg *BinaryPackage) InitDataArchive(build *BuildParams) (*TarGzWriter, error) {
+	archiveFilename := filepath.Join(build.TmpDir, "data.tar.gz")
+	tgzw, err := NewTarGzWriter(archiveFilename)
+	if err != nil {
+		return nil, err
+	}
+	return tgzw, err
 }
 
 func (bdeb *BinaryArtifact) GetReader() (*ar.Reader, error) {
@@ -93,7 +113,7 @@ func (bdeb *BinaryArtifact) ExtractAll(build *BuildParams) ([]string, error) {
 
 func (bdeb *BinaryArtifact) SetDefaults() {
 	bdeb.Filename = fmt.Sprintf("%s_%s_%s.deb", bdeb.Name, bdeb.Version, bdeb.Architecture) //goxc_0.5.2_i386.deb")
-	bdeb.DebianBinaryVersion = DEBIAN_BINARY_VERSION_DEFAULT
+	bdeb.DebianBinaryVersion = DebianBinaryVersionDefault
 	bdeb.ControlArchFile = "control.tar.gz"
 	bdeb.DataArchFile = "data.tar.gz"
 }

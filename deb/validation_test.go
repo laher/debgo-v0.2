@@ -14,18 +14,39 @@
    limitations under the License.
 */
 
-package debgen
+package deb_test
 
 import (
 	"github.com/laher/debgo-v0.2/deb"
+	"log"
+	"testing"
 )
 
-// A factory for a Go Package. Includes dependencies and Go Path information
-func NewGoPackage(name, version, maintainer, description string) *deb.Package {
-	pkg := deb.NewPackage(name, version, maintainer, description)
-	pkg.ExtraData = map[string]interface{}{
-		"GoPathExtra": []string{GoPathExtraDefault}}
-	pkg.BuildDepends = deb.BuildDependsDefault
-	pkg.Depends = deb.DependsDefault
-	return pkg
+var (
+	validVersions = []string{"1.2.3a", "123-x"}
+	badVersions   = []string{"12!3", "a123-x"}
+)
+
+func ExampleValidateVersion() {
+	v := "1.0.1-git123"
+	err := deb.ValidateVersion(v)
+	if err != nil {
+		log.Fatalf("Version validation broken for %v", v)
+	}
+
+}
+
+func TestValidateVersion(t *testing.T) {
+	for _, v := range validVersions {
+		err := deb.ValidateVersion(v)
+		if err != nil {
+			t.Fatalf("Version validation broken for %v", v)
+		}
+	}
+	for _, v := range badVersions {
+		err := deb.ValidateVersion(v)
+		if err == nil {
+			t.Fatalf("Bad Version not detected for %v", v)
+		}
+	}
 }

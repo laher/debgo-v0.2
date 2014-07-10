@@ -77,9 +77,9 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 
 	// generate .debian.tar.gz (just containing debian/ directory)
 	tgzw, err := deb.NewTarGzWriter(filepath.Join(build.DestDir, spkg.DebianFileName))
-
+	templateDir := filepath.Join(build.TemplateDir, "source", "debian")
 	//debian/control
-	controlData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "control.tpl"), TEMPLATE_SOURCEDEB_CONTROL, templateVars)
+	controlData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "control.tpl"), TemplateSourcedebControl, templateVars)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 	}
 
 	//debian/compat
-	compatData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "compat.tpl"), deb.DEBIAN_COMPAT_DEFAULT, templateVars)
+	compatData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "compat.tpl"), deb.DebianCompatDefault, templateVars)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 	}
 
 	//debian/rules
-	rulesData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "rules.tpl"), TEMPLATE_DEBIAN_RULES, templateVars)
+	rulesData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "rules.tpl"), TemplateDebianRules, templateVars)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 	}
 
 	//debian/source/format
-	sourceFormatData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "source_format.tpl"), TEMPLATE_DEBIAN_SOURCE_FORMAT, templateVars)
+	sourceFormatData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "source", "format.tpl"), TemplateDebianSourceFormat, templateVars)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 	}
 
 	//debian/source/options
-	sourceOptionsData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "source_options.tpl"), TEMPLATE_DEBIAN_SOURCE_OPTIONS, templateVars)
+	sourceOptionsData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "source", "options.tpl"), TemplateDebianSourceOptions, templateVars)
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 	}
 
 	//debian/copyright
-	copyrightData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "copyright.tpl"), TEMPLATE_DEBIAN_COPYRIGHT, templateVars)
+	copyrightData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "copyright.tpl"), TemplateDebianCopyright, templateVars)
 	if err != nil {
 		return err
 	}
@@ -139,8 +139,8 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 	}
 
 	//debian/changelog
-	initialChangelogTemplate := TEMPLATE_CHANGELOG_HEADER + "\n\n" + TEMPLATE_CHANGELOG_INITIAL_ENTRY + "\n\n" + TEMPLATE_CHANGELOG_FOOTER
-	changelogData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "initial-changelog.tpl"), initialChangelogTemplate, templateVars)
+	initialChangelogTemplate := TemplateChangelogHeader + "\n\n" + TemplateChangelogInitialEntry + "\n\n" + TemplateChangelogFooter
+	changelogData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "initial-changelog.tpl"), initialChangelogTemplate, templateVars)
 	if err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 	//generate debian/README.Debian
 	//TODO: try pulling in README.md etc
 	//debian/README.Debian
-	readmeData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "readme.tpl"), TEMPLATE_DEBIAN_README, templateVars)
+	readmeData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "readme.tpl"), TemplateDebianReadme, templateVars)
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func BuildDscFileDefault(spkg *deb.SourcePackage, build *deb.BuildParams) error 
 		return err
 	}
 	templateVars.Checksums = cs
-	dscData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "dsc.tpl"), TEMPLATE_DEBIAN_DSC, templateVars)
+	dscData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "source", "dsc.tpl"), TemplateDebianDsc, templateVars)
 	if err != nil {
 		return err
 	}
@@ -211,7 +211,7 @@ func AddSources(spkg *deb.SourcePackage, codeDir, destinationPrefix string, tgzw
 	if build.IsVerbose {
 		log.Printf("Code dir '%s' (using goPath element '%s')", codeDir, goPathRoot)
 	}
-	sources, err := GlobForSources(goPathRootTemp, codeDir, GLOB_GO_SOURCES, destinationPrefix, []string{build.TmpDir, build.DestDir})
+	sources, err := GlobForSources(goPathRootTemp, codeDir, GlobGoSources, destinationPrefix, []string{build.TmpDir, build.DestDir})
 	if err != nil {
 		return err
 	}

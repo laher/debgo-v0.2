@@ -34,9 +34,10 @@ type TarGzWriter struct {
 	Gw       *gzip.Writer   // Gzip writer (wraps the tar writer)
 }
 
+// NewTarHeader is a factory for a tar header. Fixes slashes, populates ModTime
 func NewTarHeader(path string, datalen int64, mode int64) *tar.Header {
 	h := new(tar.Header)
-	//backslash-only paths
+	//slash-only paths
 	h.Name = strings.Replace(path, "\\", "/", -1)
 	h.Size = datalen
 	h.Mode = mode
@@ -44,7 +45,7 @@ func NewTarHeader(path string, datalen int64, mode int64) *tar.Header {
 	return h
 }
 
-// creates the file on disk, and wraps the os.File with a Tar writer and Gzip writer
+// Create creates the file on disk, and wraps the os.File with a Tar writer and Gzip writer
 func (tgzw *TarGzWriter) Create() error {
 	var err error
 	tgzw.Fw, err = os.Create(tgzw.Filename)
@@ -58,7 +59,8 @@ func (tgzw *TarGzWriter) Create() error {
 	return nil
 }
 
-// Closes all 3 writers
+// Close closes all 3 writers
+// Returns the first error
 func (tgzw *TarGzWriter) Close() error {
 	err1 := tgzw.Tw.Close()
 	err2 := tgzw.Gw.Close()
@@ -72,7 +74,8 @@ func (tgzw *TarGzWriter) Close() error {
 	return err3
 }
 
-// add a file from the file system
+// AddFile adds a file from the file system
+// This is just a helper function
 func (tgzw *TarGzWriter) AddFile(sourceFile, destName string) error {
 	fi, err := os.Open(sourceFile)
 	if err != nil {
@@ -93,7 +96,7 @@ func (tgzw *TarGzWriter) AddFile(sourceFile, destName string) error {
 	return nil
 }
 
-// Add resources from file system.
+// AddFiles adds resources from file system.
 // The key should be the destination filename. Value is the local filesystem path
 func (tgzw *TarGzWriter) AddFiles(resources map[string]string) error {
 	if resources != nil {
@@ -108,7 +111,7 @@ func (tgzw *TarGzWriter) AddFiles(resources map[string]string) error {
 	return nil
 }
 
-// add a file by bytes
+// AddBytes adds a file by bytes
 func (tgzw *TarGzWriter) AddBytes(bytes []byte, destName string, mode int64) error {
 	err := tgzw.Tw.WriteHeader(NewTarHeader(destName, int64(len(bytes)), mode))
 	if err != nil {
@@ -120,6 +123,8 @@ func (tgzw *TarGzWriter) AddBytes(bytes []byte, destName string, mode int64) err
 	}
 	return nil
 }
+
+// NewTarGzWriter is a factory for TarGzWriter
 func NewTarGzWriter(archiveFilename string) (*TarGzWriter, error) {
 	tgzw := &TarGzWriter{Filename: archiveFilename}
 	err := tgzw.Create()

@@ -13,7 +13,7 @@ func main() {
 	name := "debgo-deb"
 	log.SetPrefix("[" + name + "] ")
 	//set to empty strings because they're being overridden
-	pkg := debgen.NewGoPackage("", "", "")
+	pkg := debgen.NewGoPackage("", "", "", "")
 	build := deb.NewBuildParams()
 	fs := cmdutils.InitFlags(name, pkg, build)
 	bpkg := deb.NewBinaryPackage(pkg)
@@ -34,8 +34,8 @@ func main() {
 
 	build.Resources = map[string]string{}
 	err = filepath.Walk(resourcesDir, func(path string, info os.FileInfo, err2 error) error {
-		if info!=nil && !info.IsDir() {
-			rel, err := filepath.Rel(resourcesDir,path)
+		if info != nil && !info.IsDir() {
+			rel, err := filepath.Rel(resourcesDir, path)
 			if err == nil {
 				build.Resources[rel] = path
 			}
@@ -57,8 +57,8 @@ func main() {
 		artifact.Binaries = map[string]string{}
 		archBinDir := filepath.Join(binDir, string(arch))
 		err = filepath.Walk(archBinDir, func(path string, info os.FileInfo, err2 error) error {
-			if info!=nil && !info.IsDir() {
-				rel, err := filepath.Rel(binDir,path)
+			if info != nil && !info.IsDir() {
+				rel, err := filepath.Rel(binDir, path)
 				if err == nil {
 					artifact.Binaries[rel] = path
 				}
@@ -66,7 +66,6 @@ func main() {
 			}
 			return nil
 		})
-
 
 		err = debgen.GenBinaryArtifact(artifact, build)
 		if err != nil {

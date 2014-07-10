@@ -25,20 +25,21 @@ import (
 	"os"
 )
 
-// Stores a checksum for a file
+// Checksum stores a checksum for a file
 type Checksum struct {
 	Checksum string
 	Size     int64
 	File     string
 }
 
-// Stores the 3 required checksums for a list of files
+// Checksums stores the 3 required checksums for a list of files
 type Checksums struct {
 	ChecksumsMd5    []Checksum
 	ChecksumsSha1   []Checksum
 	ChecksumsSha256 []Checksum
 }
 
+// Add adds checksum entries for each checksum algorithm
 func (cs *Checksums) Add(filepath, basename string) error {
 	checksumMd5, checksumSha1, checksumSha256, err := checksums(filepath, basename)
 	if err != nil {

@@ -16,18 +16,13 @@
 
 package deb
 
-import (
-	"fmt"
-)
-
-// *Package is the base unit for this library.
+// Package is the base unit for this library.
 // A *Package contains metadata.
 type Package struct {
-	Name            string // Package name
-	Version         string // Package version
-	Description     string // Description
-	Maintainer      string // Maintainer
-	MaintainerEmail string // Maintainer Email
+	Name        string // Package name
+	Version     string // Package version
+	Description string // Description
+	Maintainer  string // Maintainer
 
 	AdditionalControlData map[string]string // Other key/values to go into the Control file.
 
@@ -41,39 +36,28 @@ type Package struct {
 	Section          string
 	Format           string
 	Status           string
+	Other            string
 
 	ExtraData map[string]interface{} // Optional for templates
 }
 
-// A factory for a Package. Name, Version and Maintainer are mandatory.
-func NewPackage(name, version, maintainer string) *Package {
+// NewPackage is a factory for a Package. Name, Version, Maintainer and Description are mandatory.
+func NewPackage(name, version, maintainer, description string) *Package {
 	pkg := new(Package)
 	pkg.Name = name
 	pkg.Version = version
 	pkg.Maintainer = maintainer
-	pkg.Priority = PRIORITY_DEFAULT
-	pkg.StandardsVersion = STANDARDS_VERSION_DEFAULT
-	pkg.Section = SECTION_DEFAULT
-	pkg.Format = FORMAT_DEFAULT
-	pkg.Status = STATUS_DEFAULT
+	pkg.Architecture = "any" //default ...
+	pkg.Priority = PriorityDefault
+	pkg.StandardsVersion = StandardsVersionDefault
+	pkg.Section = SectionDefault
+	pkg.Format = FormatDefault
+	pkg.Status = StatusDefault
 	return pkg
 }
 
-//Resolve architecture(s) and return as a slice
+// GetArches resolves architecture(s) and return as a slice
 func (pkg *Package) GetArches() ([]Architecture, error) {
 	arches, err := resolveArches(pkg.Architecture)
 	return arches, err
-}
-
-func (pkg *Package) Validate() error {
-	if pkg.Name == "" {
-		return fmt.Errorf("Name property is required")
-	}
-	if pkg.Version == "" {
-		return fmt.Errorf("Version property is required")
-	}
-	if pkg.Maintainer == "" {
-		return fmt.Errorf("Maintainer property is required")
-	}
-	return nil
 }
