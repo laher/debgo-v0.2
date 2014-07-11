@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	GlobGoSources                = "*.go"
-	TemplateDebianSourceFormat  = deb.FormatDefault  // Debian source formaat
+	GlobGoSources               = "*.go"
+	TemplateDebianSourceFormat  = deb.FormatDefault                                      // Debian source formaat
 	TemplateDebianSourceOptions = `tar-ignore = .hg
 tar-ignore = .git
 tar-ignore = .bzr` //specifies files to ignore while building.
@@ -35,8 +35,21 @@ binary-arch: clean
 	dh_prep
 	dh_installdirs
 	cd $(CURDIR)/src && find * -name '*.go' -exec dirname {} \; | xargs -n1 go install
-	mkdir -p $(PKGDIR)/usr/bin
-	cp $(CURDIR)/bin/* $(PKGDIR)/usr/bin/
+
+	mkdir -p $(PKGDIR)/usr/bin $(CURDIR)/bin/
+	mkdir -p $(PKGDIR)/usr/share/gopkg/ $(CURDIR)/pkg/
+
+	BINFILES=$(wildcard $(CURDIR)/bin/*)
+
+	for x in$(BINFILES); do \
+		cp $$x $(PKGDIR)/usr/bin/; \
+	done;
+
+	PKGFILES=$(wildcard $(CURDIR)/pkg/*.a)
+	for x in$(PKGFILES); do \
+		cp $$x $(PKGDIR)/usr/share/gopkg/; \
+	done;
+
 	dh_strip
 	dh_compress
 	dh_fixperms
@@ -92,15 +105,27 @@ Files:{{range .Checksums.ChecksumsMd5}}
  {{.Checksum}} {{.Size}} {{.File}}{{end}}
 {{.Package.Other}}`
 
-	TemplateChangelogHeader        = `{{.Package.Name}} ({{.Package.Version}}) {{.Package.Status}}; urgency=low`
+	TemplateChangelogHeader       = `{{.Package.Name}} ({{.Package.Version}}) {{.Package.Status}}; urgency=low`
 	TemplateChangelogInitialEntry = `  * Initial import`
-	TemplateChangelogFooter        = ` -- {{.Package.Maintainer}} {{.EntryDate}}`
-	TemplateDebianCopyright        = `Copyright 2013 {{.Package.Name}}`
-	TemplateDebianReadme           = `{{.Package.Name}}
+	TemplateChangelogFooter       = ` -- {{.Package.Maintainer}} {{.EntryDate}}`
+	TemplateChangelogInitial      = TemplateChangelogHeader + "\n\n" + TemplateChangelogInitialEntry + "\n\n" + TemplateChangelogFooter
+	TemplateDebianCopyright       = `Copyright 2014 {{.Package.Name}}`
+	TemplateDebianReadme          = `{{.Package.Name}}
 ==========
 
 `
-	DevGoPathDefault = "/usr/share/gocode" // This is used by existing -dev.deb packages e.g. golang-doozer-dev and golang-protobuf-dev
-	GoPathExtraDefault  = ":" + DevGoPathDefault
+	DevGoPathDefault   = "/usr/share/gocode" // This is used by existing -dev.deb packages e.g. golang-doozer-dev and golang-protobuf-dev
+	GoPathExtraDefault = ":" + DevGoPathDefault
 )
 
+var (
+	SourceDebianFiles = map[string]string{
+		"control":        TemplateSourcedebControl,
+		"compat":         deb.DebianCompatDefault,
+		"rules":          TemplateDebianRules,
+		"source/format":  TemplateDebianSourceFormat,
+		"source/options": TemplateDebianSourceOptions,
+		"copyright":      TemplateDebianCopyright,
+		"changelog":      TemplateChangelogInitial,
+		"README.debian":  TemplateDebianReadme}
+)

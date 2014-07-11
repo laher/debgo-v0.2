@@ -16,17 +16,104 @@
 
 package deb
 
-
-import(
-	"io"
-	"log"
+import (
+	"bufio"
 	"fmt"
-	"io/ioutil"
 	"github.com/laher/argo/ar"
 	"github.com/laher/debgo-v0.2/targz"
-	"bufio"
+	"io"
+	"io/ioutil"
+	"log"
 	"strings"
 )
+
+func Contents(rdr io.Reader, topLevelFilename string) ([]string, error) {
+	ret := []string{}
+	fileNotFound := true
+	arr, err := ar.NewReader(rdr)
+	if err != nil {
+		return nil, err
+	}
+	for {
+		hdr, err := arr.Next()
+		if err == io.EOF {
+			// end of ar archive
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if hdr.Name == topLevelFilename {
+			fileNotFound = false
+			tgzr, err := targz.NewReader(arr)
+			if err != nil {
+				tgzr.Close()
+				return nil, err
+			}
+			for {
+				thdr, err := tgzr.Next()
+				if err == io.EOF {
+					// end of tar.gz archive
+					break
+				}
+				if err != nil {
+					tgzr.Close()
+					return nil, err
+				}
+				ret = append(ret, thdr.Name)
+			}
+		}
+	}
+	if fileNotFound {
+		return nil, fmt.Errorf("File not found")
+	}
+	return ret, nil
+}
+
+func ExtractFileL2(rdr io.Reader, topLevelFilename string, secondLevelFilename string, destination io.Writer) error {
+	arr, err := ar.NewReader(rdr)
+	if err != nil {
+		return err
+	}
+	for {
+		hdr, err := arr.Next()
+		if err == io.EOF {
+			// end of ar archive
+			break
+		}
+		if err != nil {
+			return err
+		}
+		if hdr.Name == topLevelFilename {
+			tgzr, err := targz.NewReader(arr)
+			if err != nil {
+				tgzr.Close()
+				return err
+			}
+			for {
+				thdr, err := tgzr.Next()
+				if err == io.EOF {
+					// end of tar.gz archive
+					break
+				}
+				if err != nil {
+					tgzr.Close()
+					return err
+				}
+				if thdr.Name == secondLevelFilename {
+					_, err = io.Copy(destination, tgzr)
+					tgzr.Close()
+					return nil
+				} else {
+					//SKIP
+					log.Printf("File %s", thdr.Name)
+				}
+			}
+			tgzr.Close()
+		}
+	}
+	return fmt.Errorf("File not found")
+}
 
 // ParseBinaryArtifactMetadata reads an artifact's contents.
 func ParseBinaryArtifactMetadata(rdr io.Reader) (*BinaryArtifact, error) {
@@ -37,8 +124,7 @@ func ParseBinaryArtifactMetadata(rdr io.Reader) (*BinaryArtifact, error) {
 	}
 
 	art := &BinaryArtifact{}
-	art.BinaryPackage = &BinaryPackage{}
-	art.BinaryPackage.Package = &Package{}
+	art.Package = &Package{}
 
 	hasDataArchive := false
 	hasControlArchive := false
@@ -55,7 +141,7 @@ func ParseBinaryArtifactMetadata(rdr io.Reader) (*BinaryArtifact, error) {
 		if err != nil {
 			return nil, err
 		}
-//		t.Logf("File %s:\n", hdr.Name)
+		//		t.Logf("File %s:\n", hdr.Name)
 		if hdr.Name == BinaryDataArchiveNameDefault {
 			// SKIP!
 			hasDataArchive = true
@@ -89,7 +175,7 @@ func ParseBinaryArtifactMetadata(rdr io.Reader) (*BinaryArtifact, error) {
 						if strings.Contains(line, ":") {
 							res := strings.SplitN(line, ":", 2)
 							log.Printf("Control File entry: '%s': %s", res[0], res[1])
-							art.BinaryPackage.Package.SetField(res[0], res[1])
+							art.Package.SetField(res[0], res[1])
 						}
 					}
 
@@ -127,4 +213,3 @@ func ParseBinaryArtifactMetadata(rdr io.Reader) (*BinaryArtifact, error) {
 	}
 	return art, nil
 }
-

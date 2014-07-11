@@ -9,10 +9,10 @@
 package targz_test
 
 import (
+	"archive/tar"
 	"bytes"
 	"fmt"
 	"github.com/laher/debgo-v0.2/targz"
-	"archive/tar"
 	"io"
 	"log"
 	"os"
@@ -21,9 +21,10 @@ import (
 
 // change this to true for generating an archive on the Filesystem
 var (
- filename = filepath.Join("_test", "tmp.tar.gz")
- isFs = true
+	filename = filepath.Join("_test", "tmp.tar.gz")
+	isFs     = true
 )
+
 func Example() {
 	// Create a buffer to write our archive to.
 	wtr := writer(isFs)

@@ -27,10 +27,11 @@ func NewTarHeader(path string, datalen int64, mode int64) *tar.Header {
 	h := new(tar.Header)
 	//slash-only paths
 	h.Name = strings.Replace(path, "\\", "/", -1)
+	if strings.HasPrefix(h.Name, "/") {
+		h.Name = h.Name[1:]
+	}
 	h.Size = datalen
 	h.Mode = mode
 	h.ModTime = time.Now()
 	return h
 }
-
-

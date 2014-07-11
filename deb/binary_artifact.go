@@ -27,24 +27,39 @@ import (
 
 // Architecture-specific build information
 type BinaryArtifact struct {
-	*BinaryPackage
+	Package *Package
 	Architecture        Architecture
 	Filename            string
 	DebianBinaryVersion string
 	ControlArchFile     string
 	DataArchFile        string
-	Binaries            map[string]string
+	MappedFiles         map[string]string
+}
+
+// GetArtifacts gets and returns an artifact for each architecture.
+// Returns an error if the package's architecture is un-parseable
+func GetArtifacts(pkg *Package) (map[Architecture]*BinaryArtifact, error) {
+	arches, err := pkg.GetArches()
+	if err != nil {
+		return nil, err
+	}
+	ret := map[Architecture]*BinaryArtifact{}
+	for _, arch := range arches {
+		archArtifact := NewBinaryArtifact(pkg, arch)
+		ret[arch] = archArtifact
+	}
+	return ret, nil
 }
 
 // Factory of platform build information
-func NewBinaryArtifact(binaryPackage *BinaryPackage, architecture Architecture) *BinaryArtifact {
-	bdeb := &BinaryArtifact{BinaryPackage: binaryPackage, Architecture: architecture}
+func NewBinaryArtifact(pkg *Package, architecture Architecture) *BinaryArtifact {
+	bdeb := &BinaryArtifact{Package: pkg, Architecture: architecture}
 	bdeb.SetDefaults()
 	return bdeb
 }
 
 // InitControlArchive initialises and returns the 'control.tar.gz' archive
-func (pkg *BinaryPackage) InitControlArchive(build *BuildParams) (*targz.Writer, error) {
+func (pkg *BinaryArtifact) InitControlArchive(build *BuildParams) (*targz.Writer, error) {
 	archiveFilename := filepath.Join(build.TmpDir, "control.tar.gz")
 	tgzw, err := targz.NewWriterFromFile(archiveFilename)
 	if err != nil {
@@ -54,7 +69,7 @@ func (pkg *BinaryPackage) InitControlArchive(build *BuildParams) (*targz.Writer,
 }
 
 // InitDataArchive initialises and returns the 'data.tar.gz' archive
-func (pkg *BinaryPackage) InitDataArchive(build *BuildParams) (*targz.Writer, error) {
+func (pkg *BinaryArtifact) InitDataArchive(build *BuildParams) (*targz.Writer, error) {
 	archiveFilename := filepath.Join(build.TmpDir, BinaryDataArchiveNameDefault)
 	tgzw, err := targz.NewWriterFromFile(archiveFilename)
 	if err != nil {
@@ -114,7 +129,7 @@ func (bdeb *BinaryArtifact) ExtractAll(build *BuildParams) ([]string, error) {
 }
 
 func (bdeb *BinaryArtifact) SetDefaults() {
-	bdeb.Filename = fmt.Sprintf("%s_%s_%s.deb", bdeb.Name, bdeb.Version, bdeb.Architecture) //goxc_0.5.2_i386.deb")
+	bdeb.Filename = fmt.Sprintf("%s_%s_%s.deb", bdeb.Package.Name, bdeb.Package.Version, bdeb.Package.Architecture) //goxc_0.5.2_i386.deb")
 	bdeb.DebianBinaryVersion = DebianBinaryVersionDefault
 	bdeb.ControlArchFile = BinaryControlArchiveNameDefault
 	bdeb.DataArchFile = BinaryDataArchiveNameDefault

@@ -8,21 +8,21 @@ import (
 	"path/filepath"
 )
 
-func Example_binaryPackage() {
+func Example_genBinaryPackage() {
 
 	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing\n")
 
 	build := deb.NewBuildParams()
+	build.Init()
 	build.IsRmtemp = false
 
-	bpkg := deb.NewBinaryPackage(pkg)
-	artifacts, err := bpkg.GetArtifacts()
+	artifacts, err := deb.GetArtifacts(pkg)
 	if err != nil {
 		log.Fatalf("Error building binary: %v", err)
 	}
-	artifacts[deb.Arch_amd64].Binaries = map[string]string{"/usr/bin/a": "_test/a.amd64"}
-	artifacts[deb.Arch_i386].Binaries = map[string]string{"/usr/bin/a": "_test/a.i386"}
-	artifacts[deb.Arch_armhf].Binaries = map[string]string{"/usr/bin/a": "_test/a.armhf"}
+	artifacts[deb.Arch_amd64].MappedFiles = map[string]string{"/usr/bin/a": "_out/a.amd64"}
+	artifacts[deb.Arch_i386].MappedFiles = map[string]string{"/usr/bin/a": "_out/a.i386"}
+	artifacts[deb.Arch_armhf].MappedFiles = map[string]string{"/usr/bin/a": "_out/a.armhf"}
 
 	prep() //prepare files for packaging using some other means.
 
@@ -37,12 +37,11 @@ func Example_binaryPackage() {
 	//
 }
 
-
 func prep() error {
 	exesMap := map[string][]string{
-		"amd64": []string{"_test/a.amd64"},
-		"i386":  []string{"_test/a.i386"},
-		"armhf": []string{"_test/a.armhf"}}
+		"amd64": []string{"_out/a.amd64"},
+		"i386":  []string{"_out/a.i386"},
+		"armhf": []string{"_out/a.armhf"}}
 	err := createExes(exesMap)
 	if err != nil {
 		log.Fatalf("%v", err)

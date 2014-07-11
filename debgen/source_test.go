@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func Example_sourcePackage() {
+func Example_genSourcePackage() {
 
 	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing")
 
@@ -16,7 +16,6 @@ func Example_sourcePackage() {
 	err := build.Init()
 	if err != nil {
 		log.Fatalf("Error initializing dirs: %v", err)
-
 	}
 	err = debgen.GenSourceArtifacts(spkg, build)
 

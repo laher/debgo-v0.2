@@ -19,21 +19,20 @@ func Example_buildBinaryDeb() {
 	}
 
 	exesMap := map[string][]string{
-		"amd64": []string{filepath.Join(deb.TempDirDefault,"/a.amd64")},
-		"i386":  []string{filepath.Join(deb.TempDirDefault,"/a.i386")},
-		"armhf": []string{filepath.Join(deb.TempDirDefault,"/a.armhf")}}
+		"amd64": []string{filepath.Join(deb.TempDirDefault, "/a.amd64")},
+		"i386":  []string{filepath.Join(deb.TempDirDefault, "/a.i386")},
+		"armhf": []string{filepath.Join(deb.TempDirDefault, "/a.armhf")}}
 	err = createExes(exesMap)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	bpkg := deb.NewBinaryPackage(pkg)
-	artifacts, err := bpkg.GetArtifacts()
+	artifacts, err := deb.GetArtifacts(pkg)
 	if err != nil {
 		log.Fatalf("Error building binary: %v", err)
 	}
-	artifacts[deb.Arch_amd64].Binaries = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault,"/a.amd64")}
-	artifacts[deb.Arch_i386].Binaries = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault,"/a.i386")}
-	artifacts[deb.Arch_armhf].Binaries = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault,"/a.armhf")}
+	artifacts[deb.Arch_amd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
+	artifacts[deb.Arch_i386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
+	artifacts[deb.Arch_armhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
 	buildBinaryArtifact := func(art *deb.BinaryArtifact, build *deb.BuildParams) error {
 		//generate artifact here ...
 		return nil
@@ -58,21 +57,20 @@ func Test_buildBinaryDeb(t *testing.T) {
 	}
 
 	exesMap := map[string][]string{
-		"amd64": []string{filepath.Join(deb.TempDirDefault,"a.amd64")},
-		"i386":  []string{filepath.Join(deb.TempDirDefault,"a.i386")},
-		"armhf": []string{filepath.Join(deb.TempDirDefault,"a.armhf")}}
+		"amd64": []string{filepath.Join(deb.TempDirDefault, "a.amd64")},
+		"i386":  []string{filepath.Join(deb.TempDirDefault, "a.i386")},
+		"armhf": []string{filepath.Join(deb.TempDirDefault, "a.armhf")}}
 	err = createExes(exesMap)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	bpkg := deb.NewBinaryPackage(pkg)
-	artifacts, err := bpkg.GetArtifacts()
+	artifacts, err := deb.GetArtifacts(pkg)
 	if err != nil {
 		t.Fatalf("Error building binary: %v", err)
 	}
-	artifacts[deb.Arch_amd64].Binaries = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault,"/a.amd64")}
-	artifacts[deb.Arch_i386].Binaries = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault,"/a.i386")}
-	artifacts[deb.Arch_armhf].Binaries = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault,"/a.armhf")}
+	artifacts[deb.Arch_amd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
+	artifacts[deb.Arch_i386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
+	artifacts[deb.Arch_armhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
 	buildBinaryArtifact := func(art *deb.BinaryArtifact, build *deb.BuildParams) error {
 		controlTgzw, err := art.InitControlArchive(build)
 		if err != nil {

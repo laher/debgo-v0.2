@@ -1,18 +1,18 @@
 package deb_test
 
-import(
-	"testing"
-	"io"
-	"os"
-	"io/ioutil"
-	"path/filepath"
+import (
 	"github.com/laher/argo/ar"
 	"github.com/laher/debgo-v0.2/deb"
+	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
+	"testing"
 )
 
-func Test_parse(t *testing.T) {
-	rdr, err := os.Open(filepath.Join(".","testpkg_0.0.2_amd64.deb"))
+func XTest_parse(t *testing.T) {
+	rdr, err := os.Open(filepath.Join(".", "testpkg_0.0.2_amd64.deb"))
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -20,12 +20,12 @@ func Test_parse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	t.Logf("Package: %+v", art.BinaryPackage.Package)
+	t.Logf("Package: %+v", art.Package)
 }
 
 //Reading an ar archive ...
-func Test_learning_reading_ar(t *testing.T) {
-	rdr, err := os.Open(filepath.Join(deb.DistDirDefault,"testpkg_0.0.2_amd64.deb"))
+func XTest_learning_reading_ar(t *testing.T) {
+	rdr, err := os.Open(filepath.Join(deb.DistDirDefault, "testpkg_0.0.2_amd64.deb"))
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -48,7 +48,7 @@ func Test_learning_reading_ar(t *testing.T) {
 		t.Logf("File %s:\n", hdr.Name)
 		if strings.HasSuffix(hdr.Name, ".tar.gz") {
 			// TODO
-			
+
 		} else if strings.HasSuffix(hdr.Name, ".tar") {
 			// TODO
 		} else if hdr.Name == "debian-binary" {
@@ -60,11 +60,11 @@ func Test_learning_reading_ar(t *testing.T) {
 		} else {
 			t.Logf("Unsupported file %s:\n", hdr.Name)
 		}
-/*
-		if _, err := io.Copy(os.Stdout, arr); err != nil {
-			t.Fatalf("%v", err)
-		}
-*/
+		/*
+			if _, err := io.Copy(os.Stdout, arr); err != nil {
+				t.Fatalf("%v", err)
+			}
+		*/
 	}
 
 }

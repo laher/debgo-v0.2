@@ -54,7 +54,7 @@ func GenControlArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams)
 	if err != nil {
 		return "", err
 	}
-	templateVars := &TemplateData{Package: archArtifact.BinaryPackage.Package, BinaryArtifact: archArtifact}
+	templateVars := &TemplateData{Package: archArtifact.Package, BinaryArtifact: archArtifact}
 	//templateVars.BinaryArtifact = archArtifact
 
 	err = GenControlFile(controlTgzw, templateVars, build)
@@ -64,19 +64,28 @@ func GenControlArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams)
 	if build.IsVerbose {
 		log.Printf("Wrote control file to control archive")
 	}
-	// This is where you'd include Postrm/Postinst etc
+	// This is where you include Postrm/Postinst etc
 	for _, scriptName := range deb.MaintainerScripts {
-		templatePath := filepath.Join(build.TemplateDir, scriptName+".tpl")
-		_, err = os.Stat(templatePath)
-		//TODO handle non-EOF errors
+		resourcePath := filepath.Join(build.ResourcesDir, "DEBIAN", scriptName)
+		_, err = os.Stat(resourcePath)
 		if err == nil {
-			scriptData, err := ProcessTemplateFile(templatePath, templateVars)
+			err = controlTgzw.AddFile(resourcePath, scriptName)
 			if err != nil {
 				return "", err
 			}
-			err = controlTgzw.AddBytes(scriptData, scriptName, 0755)
-			if err != nil {
-				return "", err
+		} else {
+			templatePath := filepath.Join(build.TemplateDir, "DEBIAN", scriptName+".tpl")
+			_, err = os.Stat(templatePath)
+			//TODO handle non-EOF errors
+			if err == nil {
+				scriptData, err := ProcessTemplateFile(templatePath, templateVars)
+				if err != nil {
+					return "", err
+				}
+				err = controlTgzw.AddBytes(scriptData, scriptName, 0755)
+				if err != nil {
+					return "", err
+				}
 			}
 		}
 	}
@@ -96,7 +105,7 @@ func GenDataArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (s
 	if err != nil {
 		return "", err
 	}
-	err = dataTgzw.AddFiles(archArtifact.Binaries)
+	err = dataTgzw.AddFiles(archArtifact.MappedFiles)
 	if err != nil {
 		return "", err
 	}
@@ -104,7 +113,7 @@ func GenDataArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (s
 		log.Printf("Added executables")
 	}
 	// TODO add README.debian automatically
-	err = dataTgzw.AddFiles(build.Resources)
+	err = dataTgzw.AddFiles(archArtifact.Package.MappedFiles)
 	if err != nil {
 		return "", err
 	}
@@ -122,6 +131,13 @@ func GenDataArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (s
 }
 
 func GenControlFile(tgzw *targz.Writer, templateVars *TemplateData, build *deb.BuildParams) error {
+	resourcePath := filepath.Join(build.ResourcesDir, "DEBIAN", "control")
+	_, err := os.Stat(resourcePath)
+	if err == nil {
+		err = tgzw.AddFile(resourcePath, "control")
+		return err
+	}
+	//try template or use a string
 	controlData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "control.tpl"), TemplateBinarydebControl, templateVars)
 	if err != nil {
 		return err
@@ -130,8 +146,5 @@ func GenControlFile(tgzw *targz.Writer, templateVars *TemplateData, build *deb.B
 		log.Printf("Control file:\n%s", string(controlData))
 	}
 	err = tgzw.AddBytes(controlData, "control", 0644)
-	if err != nil {
-		return err
-	}
 	return err
 }

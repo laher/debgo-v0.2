@@ -37,9 +37,11 @@ type Package struct {
 	Format           string
 	Status           string
 	Other            string
-	Source		 string
+	Source           string
 
 	ExtraData map[string]interface{} // Optional for templates
+
+	MappedFiles map[string]string
 }
 
 // NewPackage is a factory for a Package. Name, Version, Maintainer and Description are mandatory.
@@ -48,12 +50,14 @@ func NewPackage(name, version, maintainer, description string) *Package {
 	pkg.Name = name
 	pkg.Version = version
 	pkg.Maintainer = maintainer
+	pkg.Description = description
 	pkg.Architecture = "any" //default ...
 	pkg.Priority = PriorityDefault
 	pkg.StandardsVersion = StandardsVersionDefault
 	pkg.Section = SectionDefault
 	pkg.Format = FormatDefault
 	pkg.Status = StatusDefault
+	pkg.MappedFiles = map[string]string{}
 	return pkg
 }
 
@@ -65,20 +69,35 @@ func (pkg *Package) GetArches() ([]Architecture, error) {
 
 func (pkg *Package) SetField(key, value string) {
 	switch key {
-	case "Package": pkg.Name = value
-	case "Source": pkg.Source = value
-	case "Version": pkg.Version = value
-	case "Description": pkg.Description = value
-	case "Maintainer": pkg.Maintainer = value
-	case "Architecture": pkg.Architecture = value
-	case "Depends": pkg.Depends = value
-	case "BuildDepends": pkg.BuildDepends = value
-	case "Priority": pkg.Priority = value
-	case "StandardsVersion": pkg.StandardsVersion = value
-	case "Section": pkg.Section = value
-	case "Format": pkg.Section = value
-	case "Status": pkg.Section = value
-	case "Other": pkg.Section = value
-	default: pkg.AdditionalControlData[key] = value
+	case "Package":
+		pkg.Name = value
+	case "Source":
+		pkg.Source = value
+	case "Version":
+		pkg.Version = value
+	case "Description":
+		pkg.Description = value
+	case "Maintainer":
+		pkg.Maintainer = value
+	case "Architecture":
+		pkg.Architecture = value
+	case "Depends":
+		pkg.Depends = value
+	case "BuildDepends":
+		pkg.BuildDepends = value
+	case "Priority":
+		pkg.Priority = value
+	case "StandardsVersion":
+		pkg.StandardsVersion = value
+	case "Section":
+		pkg.Section = value
+	case "Format":
+		pkg.Section = value
+	case "Status":
+		pkg.Section = value
+	case "Other":
+		pkg.Section = value
+	default:
+		pkg.AdditionalControlData[key] = value
 	}
 }

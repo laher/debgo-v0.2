@@ -34,10 +34,10 @@ func GenGoDevArtifact(ddpkg *deb.DevPackage, build *deb.BuildParams, sourcesDir 
 // Default build function for Dev packages.
 // Implement your own if you prefer
 func GenDevArtifact(ddpkg *deb.DevPackage, build *deb.BuildParams) error {
-	if ddpkg.BinaryPackage == nil {
-		ddpkg.InitBinaryPackage()
+	if ddpkg.Dev == nil {
+		ddpkg.InitDev()
 	}
-	artifacts, err := ddpkg.BinaryPackage.GetArtifacts()
+	artifacts, err := deb.GetArtifacts(ddpkg.Dev)
 	if err != nil {
 		return err
 	}

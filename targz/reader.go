@@ -22,15 +22,14 @@ import (
 	"io"
 )
 
-
 // A Reader provides sequential access to the contents of a tar.gz archive.
 // A tar.gz archive consists of a sequence of files.
 // The Next method advances to the next file in the archive (including the first),
 // and then it can be treated as an io.Reader to access the file's data.
 type Reader struct {
-	r   io.Reader
-	Gr  *gzip.Reader
-	Tr  *tar.Reader
+	r  io.Reader
+	Gr *gzip.Reader
+	Tr *tar.Reader
 }
 
 // NewReader creates a new Reader reading from r.
@@ -51,4 +50,11 @@ func (r *Reader) Next() (*tar.Header, error) {
 
 func (r *Reader) Read(b []byte) (int, error) {
 	return r.Tr.Read(b)
+}
+
+// Close closes the gzip reader
+// TODO: close Fw if possible?
+func (tgzr *Reader) Close() error {
+	err := tgzr.Gr.Close()
+	return err
 }

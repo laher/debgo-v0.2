@@ -89,7 +89,7 @@ func ParseVersion(packageVersion string) (string, string, string, error) {
 	submatches := validVersion.FindStringSubmatch(packageVersion)
 	//log.Printf("%s: %v %v subs: %v\n", packageVersion, isEpoch, isDebianRevision, submatches)
 	if submatches == nil {
-		return "", "", "", fmt.Errorf("Invalid version property")
+		return "", "", "", fmt.Errorf("Invalid version property '%s'", packageVersion)
 	}
 	epoch := ""
 	upstreamRevision := ""
@@ -118,7 +118,7 @@ func ValidatePackage(pkg *Package) error {
 	if err != nil {
 		return err
 	}
-	err = ValidateVersion(pkg.Name)
+	err = ValidateVersion(pkg.Version)
 	if err != nil {
 		return err
 	}

@@ -17,12 +17,13 @@
 package debgen
 
 import (
-	"fmt"
 	"github.com/laher/debgo-v0.2/deb"
 	"github.com/laher/debgo-v0.2/targz"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Default function for building the source archive
@@ -52,13 +53,20 @@ func BuildSourceOrigArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPara
 	//TODO add/exclude resources to /usr/share
 	origFilePath := filepath.Join(build.DestDir, spkg.OrigFileName)
 	tgzw, err := targz.NewWriterFromFile(origFilePath)
+	defer tgzw.Close()
 	if err != nil {
 		return err
 	}
+	err = tgzw.AddFiles(spkg.MappedFiles)
+	if err != nil {
+		return  err
+	}
+/*
 	err = AddSources(spkg, build.WorkingDir, spkg.Name+"-"+spkg.Version, tgzw, build)
 	if err != nil {
 		return err
 	}
+*/
 	err = tgzw.Close()
 	if err != nil {
 		return err
@@ -78,88 +86,55 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 
 	// generate .debian.tar.gz (just containing debian/ directory)
 	tgzw, err := targz.NewWriterFromFile(filepath.Join(build.DestDir, spkg.DebianFileName))
+	defer tgzw.Close()
+	resourceDir := filepath.Join(build.TemplateDir, "source", "debian")
 	templateDir := filepath.Join(build.TemplateDir, "source", "debian")
-	//debian/control
-	controlData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "control.tpl"), TemplateSourcedebControl, templateVars)
-	if err != nil {
-		return err
-	}
-	err = tgzw.AddBytes(controlData, "debian/control", int64(0644))
-	if err != nil {
-		return err
+
+	for debianFile, defaultTemplateStr := range SourceDebianFiles {
+		debianFilePath := strings.Replace(debianFile, "/", string(os.PathSeparator), -1) //fixing source/options, source/format for local files
+		resourcePath := filepath.Join(resourceDir, debianFilePath)
+		_, err = os.Stat(resourcePath)
+		if err == nil {
+			err = tgzw.AddFile(resourcePath, debianFile)
+			if err != nil {
+				return err
+			}
+		} else {
+			controlData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, debianFilePath+".tpl"), defaultTemplateStr, templateVars)
+			if err != nil {
+				return err
+			}
+			err = tgzw.AddBytes(controlData, "debian/"+debianFile, int64(0644))
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	//debian/compat
-	compatData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "compat.tpl"), deb.DebianCompatDefault, templateVars)
-	if err != nil {
-		return err
-	}
-	err = tgzw.AddBytes(compatData, "debian/compat", int64(0644))
-	if err != nil {
-		return err
-	}
-
-	//debian/rules
-	rulesData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "rules.tpl"), TemplateDebianRules, templateVars)
-	if err != nil {
-		return err
-	}
-	err = tgzw.AddBytes(rulesData, "debian/rules", int64(0644))
-	if err != nil {
-		return err
-	}
-
-	//debian/source/format
-	sourceFormatData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "source", "format.tpl"), TemplateDebianSourceFormat, templateVars)
-	if err != nil {
-		return err
-	}
-	err = tgzw.AddBytes(sourceFormatData, "debian/source/format", int64(0644))
-	if err != nil {
-		return err
-	}
-
-	//debian/source/options
-	sourceOptionsData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "source", "options.tpl"), TemplateDebianSourceOptions, templateVars)
-	if err != nil {
-		return err
-	}
-	err = tgzw.AddBytes(sourceOptionsData, "debian/source/options", int64(0644))
-	if err != nil {
-		return err
-	}
-
-	//debian/copyright
-	copyrightData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "copyright.tpl"), TemplateDebianCopyright, templateVars)
-	if err != nil {
-		return err
-	}
-	err = tgzw.AddBytes(copyrightData, "debian/copyright", int64(0644))
-	if err != nil {
-		return err
-	}
-
-	//debian/changelog
-	initialChangelogTemplate := TemplateChangelogHeader + "\n\n" + TemplateChangelogInitialEntry + "\n\n" + TemplateChangelogFooter
-	changelogData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "initial-changelog.tpl"), initialChangelogTemplate, templateVars)
-	if err != nil {
-		return err
-	}
-	err = tgzw.AddBytes(changelogData, "debian/changelog", int64(0644))
-	if err != nil {
-		return err
-	}
-
-	//generate debian/README.Debian
-	//TODO: try pulling in README.md etc
-	//debian/README.Debian
-	readmeData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, "readme.tpl"), TemplateDebianReadme, templateVars)
-	if err != nil {
-		return err
-	}
-	err = tgzw.AddBytes(readmeData, "debian/README.debian", int64(0644))
-	if err != nil {
-		return err
+	// postrm/postinst etc from main store
+	for _, scriptName := range deb.MaintainerScripts {
+		resourcePath := filepath.Join(build.ResourcesDir, "DEBIAN", scriptName)
+		_, err = os.Stat(resourcePath)
+		if err == nil {
+			err = tgzw.AddFile(resourcePath, scriptName)
+			if err != nil {
+				return err
+			}
+		} else {
+			templatePath := filepath.Join(build.TemplateDir, "DEBIAN", scriptName+".tpl")
+			_, err = os.Stat(templatePath)
+			//TODO handle non-EOF errors
+			if err == nil {
+				scriptData, err := ProcessTemplateFile(templatePath, templateVars)
+				if err != nil {
+					return err
+				}
+				err = tgzw.AddBytes(scriptData, scriptName, 0755)
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	err = tgzw.Close()
@@ -200,7 +175,7 @@ func BuildDscFileDefault(spkg *deb.SourcePackage, build *deb.BuildParams) error 
 	}
 	return err
 }
-
+/*
 // TODO: unfinished: need to discover root dir to determine which dirs to pre-make.
 func AddSources(spkg *deb.SourcePackage, codeDir, destinationPrefix string, tgzw *targz.Writer, build *deb.BuildParams) error {
 	goPathRootTemp := GetGoPathElement(codeDir)
@@ -225,3 +200,4 @@ func AddSources(spkg *deb.SourcePackage, codeDir, destinationPrefix string, tgzw
 	}
 	return nil
 }
+*/

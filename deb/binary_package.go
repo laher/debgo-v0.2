@@ -15,7 +15,7 @@
 */
 
 package deb
-
+/*
 // BuildDevPackageFunc specifies a function which can build a DevPackage
 type BuildBinaryArtifactFunc func(*BinaryArtifact, *BuildParams) error
 
@@ -45,3 +45,5 @@ func (pkg *BinaryPackage) GetArtifacts() (map[Architecture]*BinaryArtifact, erro
 	}
 	return ret, nil
 }
+
+*/

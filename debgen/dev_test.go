@@ -6,15 +6,15 @@ import (
 	"log"
 )
 
-
-func Example_devPackage() {
+func Example_genDevPackage() {
 	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing\n")
 
 	ddpkg := deb.NewDevPackage(pkg)
 	build := deb.NewBuildParams()
 	build.IsRmtemp = false
 	var err error
-	build.Resources, err = debgen.GlobForGoSources(".", []string{build.TmpDir, build.DestDir})
+	ddpkg.InitDev()
+	ddpkg.Dev.MappedFiles, err = debgen.GlobForGoSources(".", []string{build.TmpDir, build.DestDir})
 	if err != nil {
 		log.Fatalf("Error building -dev: %v", err)
 	}
@@ -27,4 +27,3 @@ func Example_devPackage() {
 	// Output:
 	//
 }
-

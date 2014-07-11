@@ -21,7 +21,7 @@ import (
 	"os"
 )
 
-// Build information ..
+// BuildParams provides information about a particular build
 type BuildParams struct {
 	// Properties below are mainly for build-related properties rather than metadata
 
@@ -31,37 +31,38 @@ type BuildParams struct {
 	DestDir    string // Where to generate .deb files and source debs (.dsc files etc)
 	WorkingDir string // This is the root from which to find .go files, templates, resources, etc
 
-	TemplateDir string            // Optional. Only required if you're using templates
-	Resources   map[string]string // Optional. Only if debgo packages your resources automatically. Key is the destination file. Value is the local file
+	TemplateDir  string // Optional. Only required if you're using templates
+	ResourcesDir string // Optional. Only if debgo packages your resources automatically.
 }
 
+//Factory for BuildParams.
 func NewBuildParams() *BuildParams {
-	pb := &BuildParams{IsVerbose: false}
+	bp := &BuildParams{IsVerbose: false}
 
-	pb.TmpDir = TempDirDefault
-	pb.IsRmtemp = true
-	pb.DestDir = DistDirDefault
-	pb.WorkingDir = WorkingDirDefault
-	pb.TemplateDir = TemplateDirDefault
-	pb.Resources = map[string]string{}
-	return pb
+	bp.TmpDir = TempDirDefault
+	bp.IsRmtemp = true
+	bp.DestDir = DistDirDefault
+	bp.WorkingDir = WorkingDirDefault
+	bp.TemplateDir = TemplateDirDefault
+	bp.ResourcesDir = ResourcesDirDefault
+	return bp
 }
 
 //Initialise build process (make Temp and Dest directories)
-func (pkg *BuildParams) Init() error {
+func (bp *BuildParams) Init() error {
 	//make tmpDir
-	if pkg.TmpDir == "" {
+	if bp.TmpDir == "" {
 		return errors.New("Temp directory not specified")
 	}
-	err := os.MkdirAll(pkg.TmpDir, 0755)
+	err := os.MkdirAll(bp.TmpDir, 0755)
 	if err != nil {
 		return err
 	}
 	//make destDir
-	if pkg.DestDir == "" {
+	if bp.DestDir == "" {
 		return errors.New("Destination directory not specified")
 	}
-	err = os.MkdirAll(pkg.DestDir, 0755)
+	err = os.MkdirAll(bp.DestDir, 0755)
 	if err != nil {
 		return err
 	}

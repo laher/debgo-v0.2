@@ -2,6 +2,7 @@ package cmdutils
 
 import (
 	"flag"
+	"fmt"
 	"github.com/laher/debgo-v0.2/deb"
 	"os"
 )
@@ -24,12 +25,12 @@ func ParseFlags(name string, pkg *deb.Package, fs *flag.FlagSet) error {
 	err := fs.Parse(os.Args[1:])
 	if err == nil {
 		err = deb.ValidatePackage(pkg)
+		if err != nil {
+			println("")
+			fmt.Fprintf(os.Stderr, "Usage of %s:\n", name)
+			fs.PrintDefaults()
+			println("")
+		}
 	}
-	//	if err != nil {
-	//		println("")
-	//		fmt.Fprintf(os.Stderr, "Usage of %s:\n", name)
-	//		fs.PrintDefaults()
-	//		println("")
-	//	}
 	return err
 }
