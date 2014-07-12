@@ -20,7 +20,7 @@ import (
 	"github.com/laher/debgo-v0.2/deb"
 )
 
-// Applies go-specific information to packages. 
+// Applies go-specific information to packages.
 // Includes dependencies, Go Path information.
 func ApplyGoDefaults(pkg *deb.Package) {
 	if pkg.ExtraData == nil {
