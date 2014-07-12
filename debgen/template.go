@@ -22,11 +22,16 @@ import (
 	"io/ioutil"
 	"os"
 	"text/template"
+	"time"
 )
 
 // initialize "template data" object
 func NewTemplateData(pkg *deb.Package) *TemplateData {
-	templateVars := TemplateData{Package: pkg, EntryDate: "", Checksums: nil}
+	//Entry date format day-of-week, dd month yyyy hh:mm:ss +zzzz
+	const layout = "Mon, 02 Jan 2006 15:04:05 -0700"
+	t := time.Now()
+	entryDate := t.Format(layout)
+	templateVars := TemplateData{Package: pkg, EntryDate: entryDate, Checksums: nil}
 	return &templateVars
 }
 

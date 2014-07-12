@@ -8,7 +8,7 @@ import (
 
 func Example_genSourcePackage() {
 
-	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing")
+	pkg := debgen.NewGoPackage("testpkg", "0.0.2", "me <a@me.org>", "Dummy package for doing nothing\n")
 
 	spkg := deb.NewSourcePackage(pkg)
 	build := deb.NewBuildParams()
@@ -17,6 +17,14 @@ func Example_genSourcePackage() {
 	if err != nil {
 		log.Fatalf("Error initializing dirs: %v", err)
 	}
+	sourcesDestinationDir := pkg.Name + "_" + pkg.Version
+	sourceDir := ".."
+	sourcesRelativeTo := debgen.GetGoPathElement(sourceDir)
+	spkg.MappedFiles, err = debgen.GlobForSources(sourcesRelativeTo, sourceDir, debgen.GlobGoSources, sourcesDestinationDir, []string{build.TmpDir, build.DestDir})
+	if err != nil {
+		log.Fatalf("Error resolving sources: %v", err)
+	}
+
 	err = debgen.GenSourceArtifacts(spkg, build)
 
 	if err != nil {

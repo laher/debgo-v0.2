@@ -20,7 +20,7 @@ package deb
 // For pure Go packages, this can be cross-platform (architecture == 'all'), but in some cases it might need to be architecture specific
 type DevPackage struct {
 	Package *Package
-	Dev *Package
+	Dev     *Package
 }
 
 // NewDevPackage is a factory for DevPackage

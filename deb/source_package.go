@@ -18,19 +18,19 @@ package deb
 
 // SourcePackage is a cross-platform package with a .dsc file.
 type SourcePackage struct {
-	*Package
+	Package        *Package
 	DscFileName    string
 	OrigFileName   string
 	DebianFileName string
-	//BuildFunc      BuildSourcePackageFunc
+	MappedFiles    map[string]string
 }
 
 // NewSourcePackage is a factory for SourcePackage. Sets up default paths..
 // Initialises default filenames, using .tar.gz as the archive type
 func NewSourcePackage(pkg *Package) *SourcePackage {
 	spkg := &SourcePackage{Package: pkg}
-	spkg.DscFileName = spkg.Name + "_" + spkg.Version + ".dsc"
-	spkg.OrigFileName = spkg.Name + "_" + spkg.Version + ".orig.tar.gz"
-	spkg.DebianFileName = spkg.Name + "_" + spkg.Version + ".debian.tar.gz"
+	spkg.DscFileName = pkg.Name + "_" + pkg.Version + ".dsc"
+	spkg.OrigFileName = pkg.Name + "_" + pkg.Version + ".orig.tar.gz"
+	spkg.DebianFileName = pkg.Name + "_" + pkg.Version + ".debian.tar.gz"
 	return spkg
 }

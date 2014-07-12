@@ -10,7 +10,7 @@ import (
 )
 
 func Example_buildSourceDeb() {
-	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Nice of all the package")
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me <me@b.c>", "Nice of all the package\n")
 	pkg.Description = "hiya"
 	bp := deb.NewBuildParams()
 	bp.Init()
@@ -30,7 +30,7 @@ func Example_buildSourceDeb() {
 }
 
 func Test_buildSourceDeb(t *testing.T) {
-	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Nice of all the package")
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me <me@b.c>", "Nice of all the package\n")
 	pkg.Description = "hiya"
 	bp := deb.NewBuildParams()
 	bp.Init()

@@ -59,14 +59,12 @@ func BuildSourceOrigArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPara
 	}
 	err = tgzw.AddFiles(spkg.MappedFiles)
 	if err != nil {
-		return  err
+		return err
 	}
-/*
-	err = AddSources(spkg, build.WorkingDir, spkg.Name+"-"+spkg.Version, tgzw, build)
+	err = tgzw.AddFiles(spkg.Package.MappedFiles)
 	if err != nil {
 		return err
 	}
-*/
 	err = tgzw.Close()
 	if err != nil {
 		return err
@@ -175,6 +173,7 @@ func BuildDscFileDefault(spkg *deb.SourcePackage, build *deb.BuildParams) error 
 	}
 	return err
 }
+
 /*
 // TODO: unfinished: need to discover root dir to determine which dirs to pre-make.
 func AddSources(spkg *deb.SourcePackage, codeDir, destinationPrefix string, tgzw *targz.Writer, build *deb.BuildParams) error {

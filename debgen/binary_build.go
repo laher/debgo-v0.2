@@ -28,6 +28,10 @@ var ()
 
 // This is the default build process for a BuildArtifact
 func GenBinaryArtifact(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) error {
+	if build.IsVerbose {
+		log.Printf("trying to write control file for %s", archArtifact.Architecture)
+	}
+
 	_, err := GenControlArchive(archArtifact, build)
 	if err != nil {
 		return err

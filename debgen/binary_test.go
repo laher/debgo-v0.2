@@ -10,7 +10,7 @@ import (
 
 func Example_genBinaryPackage() {
 
-	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing\n")
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me <a@me.org>", "Dummy package for doing nothing\n")
 
 	build := deb.NewBuildParams()
 	build.Init()
@@ -27,6 +27,7 @@ func Example_genBinaryPackage() {
 	prep() //prepare files for packaging using some other means.
 
 	for arch, artifact := range artifacts {
+		log.Printf("generating artifact '%s'/%v", arch, artifact)
 		err = debgen.GenBinaryArtifact(artifact, build)
 		if err != nil {
 			log.Fatalf("Error building for '%s': %v", arch, err)
