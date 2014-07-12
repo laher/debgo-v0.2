@@ -24,12 +24,12 @@ import (
 // Default build function for Dev packages.
 // Implement your own if you prefer
 func GenDevArtifact(ddpkg *deb.Package, build *deb.BuildParams) error {
-	artifacts, err := deb.GetArtifacts(ddpkg)
+	artifacts, err := deb.GetDebs(ddpkg)
 	if err != nil {
 		return err
 	}
 	for arch, artifact := range artifacts {
-		err = GenBinaryArtifact(artifact, build)
+		err = GenDeb(artifact, build)
 		if err != nil {
 			return fmt.Errorf("Error building for '%s': %v", arch, err)
 		}

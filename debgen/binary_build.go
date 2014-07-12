@@ -27,7 +27,7 @@ import (
 var ()
 
 // This is the default build process for a BuildArtifact
-func GenBinaryArtifact(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) error {
+func GenDeb(archArtifact *deb.Deb, build *deb.BuildParams) error {
 	if build.IsVerbose {
 		log.Printf("trying to write control file for %s", archArtifact.Architecture)
 	}
@@ -53,13 +53,13 @@ func GenBinaryArtifact(archArtifact *deb.BinaryArtifact, build *deb.BuildParams)
 	return err
 }
 
-func GenControlArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (string, error) {
+func GenControlArchive(archArtifact *deb.Deb, build *deb.BuildParams) (string, error) {
 	controlTgzw, err := archArtifact.InitControlArchive(build)
 	if err != nil {
 		return "", err
 	}
-	templateVars := &TemplateData{Package: archArtifact.Package, BinaryArtifact: archArtifact}
-	//templateVars.BinaryArtifact = archArtifact
+	templateVars := &TemplateData{Package: archArtifact.Package, Deb: archArtifact}
+	//templateVars.Deb = archArtifact
 
 	err = GenControlFile(controlTgzw, templateVars, build)
 	if err != nil {
@@ -104,7 +104,7 @@ func GenControlArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams)
 	return controlTgzw.Filename, err
 }
 
-func GenDataArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (string, error) {
+func GenDataArchive(archArtifact *deb.Deb, build *deb.BuildParams) (string, error) {
 	dataTgzw, err := archArtifact.InitDataArchive(build)
 	if err != nil {
 		return "", err

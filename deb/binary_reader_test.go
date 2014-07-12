@@ -16,7 +16,7 @@ func XTest_parse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	art, err := deb.ParseBinaryArtifactMetadata(rdr)
+	art, err := deb.ParseDebMetadata(rdr)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}

@@ -16,7 +16,7 @@ func Example_genBinaryPackage() {
 	build.Init()
 	build.IsRmtemp = false
 
-	artifacts, err := deb.GetArtifacts(pkg)
+	artifacts, err := deb.GetDebs(pkg)
 	if err != nil {
 		log.Fatalf("Error building binary: %v", err)
 	}
@@ -28,7 +28,7 @@ func Example_genBinaryPackage() {
 
 	for arch, artifact := range artifacts {
 		log.Printf("generating artifact '%s'/%v", arch, artifact)
-		err = debgen.GenBinaryArtifact(artifact, build)
+		err = debgen.GenDeb(artifact, build)
 		if err != nil {
 			log.Fatalf("Error building for '%s': %v", arch, err)
 		}

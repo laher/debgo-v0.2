@@ -66,7 +66,7 @@ Priority: {{.Package.Priority}}
 {{if .Package.Maintainer}}Maintainer: {{.Package.Maintainer}}
 {{end}}Section: {{.Package.Section}}
 Version: {{.Package.Version}}
-Architecture: {{.BinaryArtifact.Architecture}}
+Architecture: {{.Deb.Architecture}}
 {{if .Package.Depends}}Depends: {{.Package.Depends}}
 {{end}}{{range $key, $value := .Package.AdditionalControlData}}{{$key}}: {{$value}}
 {{end}}Description: {{.Package.Description}}

@@ -28,20 +28,20 @@ func Example_buildBinaryDeb() {
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	artifacts, err := deb.GetArtifacts(pkg)
+	artifacts, err := deb.GetDebs(pkg)
 	if err != nil {
 		log.Fatalf("Error building binary: %v", err)
 	}
 	artifacts[deb.ArchAmd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
 	artifacts[deb.ArchI386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
 	artifacts[deb.ArchArmhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
-	buildBinaryArtifact := func(art *deb.BinaryArtifact, build *deb.BuildParams) error {
+	buildDeb := func(art *deb.Deb, build *deb.BuildParams) error {
 		//generate artifact here ...
 		return nil
 	}
 	for arch, artifact := range artifacts {
 		//build binary deb here ...
-		err = buildBinaryArtifact(artifact, build)
+		err = buildDeb(artifact, build)
 		if err != nil {
 			log.Fatalf("Error building for '%s': %v", arch, err)
 		}
@@ -66,14 +66,14 @@ func Test_buildBinaryDeb(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	artifacts, err := deb.GetArtifacts(pkg)
+	artifacts, err := deb.GetDebs(pkg)
 	if err != nil {
 		t.Fatalf("Error building binary: %v", err)
 	}
 	artifacts[deb.ArchAmd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
 	artifacts[deb.ArchI386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
 	artifacts[deb.ArchArmhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
-	buildBinaryArtifact := func(art *deb.BinaryArtifact, build *deb.BuildParams) error {
+	buildDeb := func(art *deb.Deb, build *deb.BuildParams) error {
 		controlTgzw, err := art.InitControlArchive(build)
 		if err != nil {
 			return err
@@ -111,7 +111,7 @@ func Test_buildBinaryDeb(t *testing.T) {
 	}
 	for arch, artifact := range artifacts {
 		//build binary deb here ...
-		err = buildBinaryArtifact(artifact, build)
+		err = buildDeb(artifact, build)
 		if err != nil {
 			t.Fatalf("Error building for '%s': %v", arch, err)
 		}

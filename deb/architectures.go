@@ -51,6 +51,7 @@ func resolveArches(arches string) ([]Architecture, error) {
 	} else if arches == string(ArchArmhf) {
 		return []Architecture{ArchArmhf}, nil
 	} else if arches == string(ArchAmd64) {
+		return []Architecture{ArchAmd64}, nil
 	} else if arches == string(ArchAll) {
 		return []Architecture{ArchAll}, nil
 	}

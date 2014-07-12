@@ -115,15 +115,15 @@ func ExtractFileL2(rdr io.Reader, topLevelFilename string, secondLevelFilename s
 	return fmt.Errorf("File not found")
 }
 
-// ParseBinaryArtifactMetadata reads an artifact's contents.
-func ParseBinaryArtifactMetadata(rdr io.Reader) (*BinaryArtifact, error) {
+// ParseDebMetadata reads an artifact's contents.
+func ParseDebMetadata(rdr io.Reader) (*Deb, error) {
 
 	arr, err := ar.NewReader(rdr)
 	if err != nil {
 		return nil, err
 	}
 
-	art := &BinaryArtifact{}
+	art := &Deb{}
 	art.Package = &Package{}
 
 	hasDataArchive := false
