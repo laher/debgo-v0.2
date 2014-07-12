@@ -21,23 +21,10 @@ import (
 	"github.com/laher/debgo-v0.2/deb"
 )
 
-/*
-// Generate artifacts for Go-specific packages
-func GenGoDevArtifact(ddpkg *deb.DevPackage, build *deb.BuildParams, sourcesDir string) error {
-	destinationGoPathElement := DEVDEB_GO_PATH_DEFAULT
-	sourcesRelativeTo := GetGoPathElement(sourcesDir)
-	return GenDevArtifact(ddpkg, build, sourcesDir, sourcesRelativeTo, destinationGoPathElement)
-
-}
-*/
-
 // Default build function for Dev packages.
 // Implement your own if you prefer
-func GenDevArtifact(ddpkg *deb.DevPackage, build *deb.BuildParams) error {
-	if ddpkg.Dev == nil {
-		ddpkg.InitDev()
-	}
-	artifacts, err := deb.GetArtifacts(ddpkg.Dev)
+func GenDevArtifact(ddpkg *deb.Package, build *deb.BuildParams) error {
+	artifacts, err := deb.GetArtifacts(ddpkg)
 	if err != nil {
 		return err
 	}

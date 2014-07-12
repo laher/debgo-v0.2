@@ -70,15 +70,15 @@ func GenControlArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams)
 	}
 	// This is where you include Postrm/Postinst etc
 	for _, scriptName := range deb.MaintainerScripts {
-		resourcePath := filepath.Join(build.ResourcesDir, "DEBIAN", scriptName)
+		resourcePath := filepath.Join(build.ResourcesDir, DebianDir, scriptName)
 		_, err = os.Stat(resourcePath)
 		if err == nil {
-			err = controlTgzw.AddFile(resourcePath, scriptName)
+			err = TarAddFile(controlTgzw.Tw, resourcePath, scriptName)
 			if err != nil {
 				return "", err
 			}
 		} else {
-			templatePath := filepath.Join(build.TemplateDir, "DEBIAN", scriptName+".tpl")
+			templatePath := filepath.Join(build.TemplateDir, DebianDir, scriptName+TplExtension)
 			_, err = os.Stat(templatePath)
 			//TODO handle non-EOF errors
 			if err == nil {
@@ -86,7 +86,7 @@ func GenControlArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams)
 				if err != nil {
 					return "", err
 				}
-				err = controlTgzw.AddBytes(scriptData, scriptName, 0755)
+				err = TarAddBytes(controlTgzw.Tw, scriptData, scriptName, 0755)
 				if err != nil {
 					return "", err
 				}
@@ -109,7 +109,7 @@ func GenDataArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (s
 	if err != nil {
 		return "", err
 	}
-	err = dataTgzw.AddFiles(archArtifact.MappedFiles)
+	err = TarAddFiles(dataTgzw.Tw, archArtifact.MappedFiles)
 	if err != nil {
 		return "", err
 	}
@@ -117,7 +117,7 @@ func GenDataArchive(archArtifact *deb.BinaryArtifact, build *deb.BuildParams) (s
 		log.Printf("Added executables")
 	}
 	// TODO add README.debian automatically
-	err = dataTgzw.AddFiles(archArtifact.Package.MappedFiles)
+	err = TarAddFiles(dataTgzw.Tw, archArtifact.Package.MappedFiles)
 	if err != nil {
 		return "", err
 	}
@@ -138,7 +138,7 @@ func GenControlFile(tgzw *targz.Writer, templateVars *TemplateData, build *deb.B
 	resourcePath := filepath.Join(build.ResourcesDir, "DEBIAN", "control")
 	_, err := os.Stat(resourcePath)
 	if err == nil {
-		err = tgzw.AddFile(resourcePath, "control")
+		err = TarAddFile(tgzw.Tw, resourcePath, "control")
 		return err
 	}
 	//try template or use a string
@@ -149,6 +149,6 @@ func GenControlFile(tgzw *targz.Writer, templateVars *TemplateData, build *deb.B
 	if build.IsVerbose {
 		log.Printf("Control file:\n%s", string(controlData))
 	}
-	err = tgzw.AddBytes(controlData, "control", 0644)
+	err = TarAddBytes(tgzw.Tw, controlData, "control", 0644)
 	return err
 }

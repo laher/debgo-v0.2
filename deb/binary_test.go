@@ -1,11 +1,13 @@
 package deb_test
 
 import (
+	"archive/tar"
 	"github.com/laher/debgo-v0.2/deb"
 	"log"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func Example_buildBinaryDeb() {
@@ -30,9 +32,9 @@ func Example_buildBinaryDeb() {
 	if err != nil {
 		log.Fatalf("Error building binary: %v", err)
 	}
-	artifacts[deb.Arch_amd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
-	artifacts[deb.Arch_i386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
-	artifacts[deb.Arch_armhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
+	artifacts[deb.ArchAmd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
+	artifacts[deb.ArchI386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
+	artifacts[deb.ArchArmhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
 	buildBinaryArtifact := func(art *deb.BinaryArtifact, build *deb.BuildParams) error {
 		//generate artifact here ...
 		return nil
@@ -68,9 +70,9 @@ func Test_buildBinaryDeb(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error building binary: %v", err)
 	}
-	artifacts[deb.Arch_amd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
-	artifacts[deb.Arch_i386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
-	artifacts[deb.Arch_armhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
+	artifacts[deb.ArchAmd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
+	artifacts[deb.ArchI386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
+	artifacts[deb.ArchArmhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
 	buildBinaryArtifact := func(art *deb.BinaryArtifact, build *deb.BuildParams) error {
 		controlTgzw, err := art.InitControlArchive(build)
 		if err != nil {
@@ -78,7 +80,12 @@ func Test_buildBinaryDeb(t *testing.T) {
 		}
 		controlData := []byte("Package: testpkg\n")
 		//TODO add more files here ...
-		err = controlTgzw.AddBytes(controlData, "control", 0644)
+		header := &tar.Header{Name: "control", Size: int64(len(controlData)), Mode: int64(644), ModTime: time.Now()}
+		err = controlTgzw.Tw.WriteHeader(header)
+		if err != nil {
+			return err
+		}
+		_, err = controlTgzw.Tw.Write(controlData)
 		if err != nil {
 			return err
 		}

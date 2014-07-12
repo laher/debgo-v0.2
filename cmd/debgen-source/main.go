@@ -11,7 +11,8 @@ func main() {
 	name := "debgen-source"
 	log.SetPrefix("[" + name + "] ")
 	//set to empty strings because they're being overridden
-	pkg := debgen.NewGoPackage("", "", "", "")
+	pkg := deb.NewPackage("", "", "", "")
+	debgen.ApplyGoDefaults(pkg)
 	build := deb.NewBuildParams()
 	err := build.Init()
 	if err != nil {

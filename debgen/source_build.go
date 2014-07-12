@@ -57,11 +57,11 @@ func BuildSourceOrigArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPara
 	if err != nil {
 		return err
 	}
-	err = tgzw.AddFiles(spkg.MappedFiles)
+	err = TarAddFiles(tgzw.Tw, spkg.MappedFiles)
 	if err != nil {
 		return err
 	}
-	err = tgzw.AddFiles(spkg.Package.MappedFiles)
+	err = TarAddFiles(tgzw.Tw, spkg.Package.MappedFiles)
 	if err != nil {
 		return err
 	}
@@ -85,24 +85,24 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 	// generate .debian.tar.gz (just containing debian/ directory)
 	tgzw, err := targz.NewWriterFromFile(filepath.Join(build.DestDir, spkg.DebianFileName))
 	defer tgzw.Close()
-	resourceDir := filepath.Join(build.TemplateDir, "source", "debian")
-	templateDir := filepath.Join(build.TemplateDir, "source", "debian")
+	resourceDir := filepath.Join(build.TemplateDir, "source", DebianDir)
+	templateDir := filepath.Join(build.TemplateDir, "source", DebianDir)
 
 	for debianFile, defaultTemplateStr := range SourceDebianFiles {
 		debianFilePath := strings.Replace(debianFile, "/", string(os.PathSeparator), -1) //fixing source/options, source/format for local files
 		resourcePath := filepath.Join(resourceDir, debianFilePath)
 		_, err = os.Stat(resourcePath)
 		if err == nil {
-			err = tgzw.AddFile(resourcePath, debianFile)
+			err = TarAddFile(tgzw.Tw, resourcePath, debianFile)
 			if err != nil {
 				return err
 			}
 		} else {
-			controlData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, debianFilePath+".tpl"), defaultTemplateStr, templateVars)
+			controlData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, debianFilePath+TplExtension), defaultTemplateStr, templateVars)
 			if err != nil {
 				return err
 			}
-			err = tgzw.AddBytes(controlData, "debian/"+debianFile, int64(0644))
+			err = TarAddBytes(tgzw.Tw, controlData, DebianDir+"/"+debianFile, int64(0644))
 			if err != nil {
 				return err
 			}
@@ -111,15 +111,15 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 
 	// postrm/postinst etc from main store
 	for _, scriptName := range deb.MaintainerScripts {
-		resourcePath := filepath.Join(build.ResourcesDir, "DEBIAN", scriptName)
+		resourcePath := filepath.Join(build.ResourcesDir, DebianDir, scriptName)
 		_, err = os.Stat(resourcePath)
 		if err == nil {
-			err = tgzw.AddFile(resourcePath, scriptName)
+			err = TarAddFile(tgzw.Tw, resourcePath, scriptName)
 			if err != nil {
 				return err
 			}
 		} else {
-			templatePath := filepath.Join(build.TemplateDir, "DEBIAN", scriptName+".tpl")
+			templatePath := filepath.Join(build.TemplateDir, DebianDir, scriptName+TplExtension)
 			_, err = os.Stat(templatePath)
 			//TODO handle non-EOF errors
 			if err == nil {
@@ -127,7 +127,7 @@ func BuildSourceDebianArchiveDefault(spkg *deb.SourcePackage, build *deb.BuildPa
 				if err != nil {
 					return err
 				}
-				err = tgzw.AddBytes(scriptData, scriptName, 0755)
+				err = TarAddBytes(tgzw.Tw, scriptData, scriptName, 0755)
 				if err != nil {
 					return err
 				}
@@ -173,30 +173,3 @@ func BuildDscFileDefault(spkg *deb.SourcePackage, build *deb.BuildParams) error 
 	}
 	return err
 }
-
-/*
-// TODO: unfinished: need to discover root dir to determine which dirs to pre-make.
-func AddSources(spkg *deb.SourcePackage, codeDir, destinationPrefix string, tgzw *targz.Writer, build *deb.BuildParams) error {
-	goPathRootTemp := GetGoPathElement(codeDir)
-	goPathRoot, err := filepath.EvalSymlinks(goPathRootTemp)
-	if err != nil {
-		log.Printf("Could not evaluate symlinks for '%s'", goPathRootTemp)
-		goPathRoot = goPathRootTemp
-	}
-	if build.IsVerbose {
-		log.Printf("Code dir '%s' (using goPath element '%s')", codeDir, goPathRoot)
-	}
-	sources, err := GlobForSources(goPathRootTemp, codeDir, GlobGoSources, destinationPrefix, []string{build.TmpDir, build.DestDir})
-	if err != nil {
-		return err
-	}
-	for destName, match := range sources {
-		err = tgzw.AddFile(match, destName)
-		if err != nil {
-			return fmt.Errorf("Error adding go sources (match %s): %v,", match, err)
-		}
-
-	}
-	return nil
-}
-*/

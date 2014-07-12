@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 )
 
 // Writer encapsulates the tar, gz and file operations of a TarGz file
@@ -50,87 +49,6 @@ func (tgzw *Writer) Close() error {
 	return nil
 }
 
-// AddFile adds a file from the file system
-// This is just a helper function
-// TODO: directories
-func (tgzw *Writer) AddFile(sourceFile, destName string) error {
-	fi, err := os.Open(sourceFile)
-	defer fi.Close()
-	if err != nil {
-		return err
-	}
-	finf, err := fi.Stat()
-	if err != nil {
-		return err
-	}
-
-	//recurse as necessary
-	if finf.IsDir() {
-		return fmt.Errorf("Can't add a directory using AddFile. See AddFileOrDir")
-	}
-	err = tgzw.Tw.WriteHeader(NewTarHeader(destName, finf.Size(), int64(finf.Mode())))
-	if err != nil {
-		return err
-	}
-	_, err = io.Copy(tgzw.Tw, fi)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (tgzw *Writer) AddFileOrDir(sourceFile, destName string) error {
-	finf, err := os.Stat(sourceFile)
-	if err != nil {
-		return err
-	}
-	//recurse as necessary
-	if finf.IsDir() {
-		err = filepath.Walk(sourceFile, func(path string, info os.FileInfo, err2 error) error {
-			if info != nil && !info.IsDir() {
-				rel, err := filepath.Rel(sourceFile, path)
-				if err == nil {
-					return tgzw.AddFile(rel, path)
-				}
-				return err
-			}
-			return nil
-		})
-		// return now
-		return err
-	}
-
-	return tgzw.AddFile(sourceFile, destName)
-}
-
-// AddFiles adds resources from file system.
-// The key should be the destination filename. Value is the local filesystem path
-func (tgzw *Writer) AddFiles(resources map[string]string) error {
-	if resources != nil {
-		for name, localPath := range resources {
-			err := tgzw.AddFile(localPath, name)
-			if err != nil {
-				tgzw.Close()
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// AddBytes adds a file by bytes
-func (tgzw *Writer) AddBytes(bytes []byte, destName string, mode int64) error {
-	err := tgzw.Tw.WriteHeader(NewTarHeader(destName, int64(len(bytes)), mode))
-	if err != nil {
-		return err
-	}
-	_, err = tgzw.Tw.Write(bytes)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // NewWriter is a factory for Writer
 func NewWriterFromFile(archiveFilename string) (*Writer, error) {
 	fw, err := os.Create(archiveFilename)
@@ -145,7 +63,6 @@ func NewWriterFromFile(archiveFilename string) (*Writer, error) {
 // Create creates the file on disk, and
 // wraps the io.Writer with a Tar writer and Gzip writer
 func NewWriter(w io.Writer) *Writer {
-
 	tgzw := &Writer{Fw: w}
 	// gzip writer
 	tgzw.Gw = gzip.NewWriter(tgzw.Fw)

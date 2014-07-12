@@ -20,9 +20,9 @@ func Example_genBinaryPackage() {
 	if err != nil {
 		log.Fatalf("Error building binary: %v", err)
 	}
-	artifacts[deb.Arch_amd64].MappedFiles = map[string]string{"/usr/bin/a": "_out/a.amd64"}
-	artifacts[deb.Arch_i386].MappedFiles = map[string]string{"/usr/bin/a": "_out/a.i386"}
-	artifacts[deb.Arch_armhf].MappedFiles = map[string]string{"/usr/bin/a": "_out/a.armhf"}
+	artifacts[deb.ArchAmd64].MappedFiles = map[string]string{"/usr/bin/a": "_out/a.amd64"}
+	artifacts[deb.ArchI386].MappedFiles = map[string]string{"/usr/bin/a": "_out/a.i386"}
+	artifacts[deb.ArchArmhf].MappedFiles = map[string]string{"/usr/bin/a": "_out/a.armhf"}
 
 	prep() //prepare files for packaging using some other means.
 

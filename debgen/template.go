@@ -28,9 +28,8 @@ import (
 // initialize "template data" object
 func NewTemplateData(pkg *deb.Package) *TemplateData {
 	//Entry date format day-of-week, dd month yyyy hh:mm:ss +zzzz
-	const layout = "Mon, 02 Jan 2006 15:04:05 -0700"
 	t := time.Now()
-	entryDate := t.Format(layout)
+	entryDate := t.Format(ChangelogDateLayout)
 	templateVars := TemplateData{Package: pkg, EntryDate: entryDate, Checksums: nil}
 	return &templateVars
 }
@@ -78,28 +77,3 @@ func ProcessTemplateString(tplText string, vars interface{}) ([]byte, error) {
 	return dest.Bytes(), nil
 
 }
-
-/*
-func newTemplateData(appName, appVersion, maintainer, maintainerEmail, version, arch, description, depends, buildDepends, priority, status, standardsVersion, section, format string, extraData map[string]interface{}, metadataDeb map[string]string) TemplateData {
-	vars := TemplateData{
-		appName,
-		appVersion,
-		buildDepends,
-		priority,
-		maintainer,
-		maintainerEmail,
-		standardsVersion,
-		arch,
-		section,
-		depends,
-		description,
-		"",
-		status,
-		time.Now().Format("Mon, 2 Jan 2006 15:04:05 -0700"),
-		format,
-		metadataDeb,
-		extraData,
-		nil}
-	return vars
-}
-*/

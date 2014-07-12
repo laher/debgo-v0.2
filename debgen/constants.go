@@ -116,6 +116,11 @@ Files:{{range .Checksums.ChecksumsMd5}}
 `
 	DevGoPathDefault   = "/usr/share/gocode" // This is used by existing -dev.deb packages e.g. golang-doozer-dev and golang-protobuf-dev
 	GoPathExtraDefault = ":" + DevGoPathDefault
+
+	DebianDir    = "debian"
+	TplExtension = ".tpl"
+
+	ChangelogDateLayout = "Mon, 02 Jan 2006 15:04:05 -0700"
 )
 
 var (

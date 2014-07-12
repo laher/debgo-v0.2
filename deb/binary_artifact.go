@@ -25,7 +25,7 @@ import (
 	"path/filepath"
 )
 
-// Architecture-specific build information
+// BinaryArtifact is an architecture-specific deb
 type BinaryArtifact struct {
 	Package             *Package
 	Architecture        Architecture

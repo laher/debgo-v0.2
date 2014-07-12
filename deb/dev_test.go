@@ -9,9 +9,8 @@ import (
 func Example_buildDevPackage() {
 
 	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "A package\ntestpkg is a lovel package with many wow")
-	pkg.Description = "hiya"
 	bp := deb.NewBuildParams()
-	buildFunc := func(dpkg *deb.DevPackage, bp *deb.BuildParams) error {
+	buildFunc := func(dpkg *deb.Package, bp *deb.BuildParams) error {
 		// Generate files here.
 		return nil
 	}
@@ -25,10 +24,9 @@ func Example_buildDevPackage() {
 func Test_buildDevPackage(t *testing.T) {
 
 	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "A package\ntestpkg is a lovel package with many wow")
-	pkg.Description = "hiya"
 	bp := deb.NewBuildParams()
 	bp.Init()
-	buildFunc := func(dpkg *deb.DevPackage, bp *deb.BuildParams) error {
+	buildFunc := func(dpkg *deb.Package, bp *deb.BuildParams) error {
 		// Generate files here.
 		return nil
 	}

@@ -13,7 +13,8 @@ func main() {
 	name := "debgen-deb"
 	log.SetPrefix("[" + name + "] ")
 	//set to empty strings because they're being overridden
-	pkg := debgen.NewGoPackage("", "", "", "")
+	pkg := deb.NewPackage("", "", "", "")
+	debgen.ApplyGoDefaults(pkg)
 	build := deb.NewBuildParams()
 	fs := cmdutils.InitFlags(name, pkg, build)
 

@@ -8,7 +8,8 @@ import (
 
 func Example_genSourcePackage() {
 
-	pkg := debgen.NewGoPackage("testpkg", "0.0.2", "me <a@me.org>", "Dummy package for doing nothing\n")
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me <a@me.org>", "Dummy package for doing nothing\n")
+	debgen.ApplyGoDefaults(pkg)
 
 	spkg := deb.NewSourcePackage(pkg)
 	build := deb.NewBuildParams()

@@ -20,12 +20,21 @@ import (
 	"github.com/laher/debgo-v0.2/deb"
 )
 
-// A factory for a Go Package. Includes dependencies and Go Path information
-func NewGoPackage(name, version, maintainer, description string) *deb.Package {
-	pkg := deb.NewPackage(name, version, maintainer, description)
-	pkg.ExtraData = map[string]interface{}{
-		"GoPathExtra": []string{GoPathExtraDefault}}
+// Applies go-specific information to packages. 
+// Includes dependencies, Go Path information.
+func ApplyGoDefaults(pkg *deb.Package) {
+	if pkg.ExtraData == nil {
+		pkg.ExtraData = map[string]interface{}{}
+	}
+	gpe := []string{}
+	ext, ok := pkg.ExtraData["GoPathExtra"]
+	if !ok {
+		switch t := ext.(type) {
+		case []string:
+			gpe = t
+		}
+	}
+	pkg.ExtraData["GoPathExtra"] = append(gpe, GoPathExtraDefault)
 	pkg.BuildDepends = deb.BuildDependsDefault
 	pkg.Depends = deb.DependsDefault
-	return pkg
 }

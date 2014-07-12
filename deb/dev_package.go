@@ -16,26 +16,12 @@
 
 package deb
 
-// DevPackage builds a '-dev' package, which itself should just contain the sources to use this package as a BuildDepends dependency.
-// For pure Go packages, this can be cross-platform (architecture == 'all'), but in some cases it might need to be architecture specific
-type DevPackage struct {
-	Package *Package
-	Dev     *Package
-}
+// NewDevPackage is a factory for creating '-dev' packages from packages
+func NewDevPackage(pkg *Package) *Package {
+	//TODO *complete* copy of properties, using reflection?
+	devpkg := NewPackage(pkg.Name+"-dev", pkg.Version, pkg.Maintainer, pkg.Description)
+	devpkg.AdditionalControlData = pkg.AdditionalControlData
+	devpkg.Architecture = "all"
+	return devpkg
 
-// NewDevPackage is a factory for DevPackage
-func NewDevPackage(pkg *Package) *DevPackage {
-	ddpkg := &DevPackage{Package: pkg} //		DebFilePath: debPath,
-	return ddpkg
-}
-
-// InitBinaryPackage initialises the binary package for -dev.deb packages
-func (ddpkg *DevPackage) InitDev() {
-	if ddpkg.Dev == nil {
-		//TODO *complete* copy of properties, using reflection?
-		devpkg := NewPackage(ddpkg.Package.Name+"-dev", ddpkg.Package.Version, ddpkg.Package.Maintainer, ddpkg.Package.Description)
-		devpkg.AdditionalControlData = ddpkg.Package.AdditionalControlData
-		devpkg.Architecture = "all"
-		ddpkg.Dev = devpkg
-	}
 }
