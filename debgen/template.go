@@ -42,29 +42,29 @@ type TemplateData struct {
 	Checksums *deb.Checksums
 }
 
-func ProcessTemplateFileOrString(templateFile string, templateDefault string, vars interface{}) ([]byte, error) {
+func TemplateFileOrString(templateFile string, templateDefault string, vars interface{}) ([]byte, error) {
 	_, err := os.Stat(templateFile)
 	var tplText string
 	if os.IsNotExist(err) {
 		tplText = templateDefault
-		return ProcessTemplateString(tplText, vars)
+		return TemplateString(tplText, vars)
 	} else if err != nil {
 		return nil, err
 	} else {
-		return ProcessTemplateFile(tplText, vars)
+		return TemplateFile(tplText, vars)
 	}
 }
 
-func ProcessTemplateFile(templateFile string, vars interface{}) ([]byte, error) {
+func TemplateFile(templateFile string, vars interface{}) ([]byte, error) {
 	tplBytes, err := ioutil.ReadFile(templateFile)
 	if err != nil {
 		return nil, err
 	}
 	tplText := string(tplBytes)
-	return ProcessTemplateString(tplText, vars)
+	return TemplateString(tplText, vars)
 }
 
-func ProcessTemplateString(tplText string, vars interface{}) ([]byte, error) {
+func TemplateString(tplText string, vars interface{}) ([]byte, error) {
 	tpl, err := template.New("template").Parse(tplText)
 	if err != nil {
 		return nil, err

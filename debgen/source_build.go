@@ -98,7 +98,7 @@ func GenSourceDebianArchive(spkg *deb.SourcePackage, build *deb.BuildParams) err
 				return err
 			}
 		} else {
-			controlData, err := ProcessTemplateFileOrString(filepath.Join(templateDir, debianFilePath+TplExtension), defaultTemplateStr, templateVars)
+			controlData, err := TemplateFileOrString(filepath.Join(templateDir, debianFilePath+TplExtension), defaultTemplateStr, templateVars)
 			if err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ func GenSourceDebianArchive(spkg *deb.SourcePackage, build *deb.BuildParams) err
 			_, err = os.Stat(templatePath)
 			//TODO handle non-EOF errors
 			if err == nil {
-				scriptData, err := ProcessTemplateFile(templatePath, templateVars)
+				scriptData, err := TemplateFile(templatePath, templateVars)
 				if err != nil {
 					return err
 				}
@@ -160,7 +160,7 @@ func GenDscFile(spkg *deb.SourcePackage, build *deb.BuildParams) error {
 		return err
 	}
 	templateVars.Checksums = cs
-	dscData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "source", "dsc.tpl"), TemplateDebianDsc, templateVars)
+	dscData, err := TemplateFileOrString(filepath.Join(build.TemplateDir, "source", "dsc.tpl"), TemplateDebianDsc, templateVars)
 	if err != nil {
 		return err
 	}

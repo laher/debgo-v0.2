@@ -26,8 +26,8 @@ import (
 	"time"
 )
 
-// NewTarHeader is a factory for a tar header. Fixes slashes, populates ModTime
-func NewTarHeader(path string, datalen int64, mode int64) *tar.Header {
+// TarHeader is a factory for a tar header. Fixes slashes, populates ModTime
+func TarHeader(path string, datalen int64, mode int64) *tar.Header {
 	h := new(tar.Header)
 	//slash-only paths
 	h.Name = strings.Replace(path, "\\", "/", -1)
@@ -58,7 +58,7 @@ func TarAddFile(tw *tar.Writer, sourceFile, destName string) error {
 	if finf.IsDir() {
 		return fmt.Errorf("Can't add a directory using TarAddFile. See AddFileOrDir")
 	}
-	err = tw.WriteHeader(NewTarHeader(destName, finf.Size(), int64(finf.Mode())))
+	err = tw.WriteHeader(TarHeader(destName, finf.Size(), int64(finf.Mode())))
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func TarAddFiles(tw *tar.Writer, resources map[string]string) error {
 
 // TarAddBytes adds a file by bytes with a given path
 func TarAddBytes(tw *tar.Writer, bytes []byte, destName string, mode int64) error {
-	err := tw.WriteHeader(NewTarHeader(destName, int64(len(bytes)), mode))
+	err := tw.WriteHeader(TarHeader(destName, int64(len(bytes)), mode))
 	if err != nil {
 		return err
 	}

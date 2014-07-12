@@ -82,7 +82,7 @@ func GenControlArchive(archArtifact *deb.Deb, build *deb.BuildParams) (string, e
 			_, err = os.Stat(templatePath)
 			//TODO handle non-EOF errors
 			if err == nil {
-				scriptData, err := ProcessTemplateFile(templatePath, templateVars)
+				scriptData, err := TemplateFile(templatePath, templateVars)
 				if err != nil {
 					return "", err
 				}
@@ -142,7 +142,7 @@ func GenControlFile(tgzw *targz.Writer, templateVars *TemplateData, build *deb.B
 		return err
 	}
 	//try template or use a string
-	controlData, err := ProcessTemplateFileOrString(filepath.Join(build.TemplateDir, "control.tpl"), TemplateBinarydebControl, templateVars)
+	controlData, err := TemplateFileOrString(filepath.Join(build.TemplateDir, "control.tpl"), TemplateBinarydebControl, templateVars)
 	if err != nil {
 		return err
 	}
