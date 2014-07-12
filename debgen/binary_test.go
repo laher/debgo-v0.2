@@ -16,7 +16,7 @@ func Example_genBinaryPackage() {
 	build.Init()
 	build.IsRmtemp = false
 
-	artifacts, err := deb.GetDebs(pkg)
+	artifacts, err := deb.NewDebs(pkg)
 	if err != nil {
 		log.Fatalf("Error building binary: %v", err)
 	}

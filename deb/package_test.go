@@ -14,15 +14,24 @@
    limitations under the License.
 */
 
-package deb
+package deb_test
 
-// NewDevPackage is a factory for creating '-dev' packages from packages.
-// It just does a copy, appends "-dev" to the name, and sets the 
-func NewDevPackage(pkg *Package) *Package {
-	//TODO *complete* copy of properties, using reflection?
-	devpkg := Copy(pkg)
-	devpkg.Name = pkg.Name+"-dev"
-	devpkg.Architecture  = "all"
-	return devpkg
+import (
+	"github.com/laher/debgo-v0.2/deb"
+	"testing"
+)
 
+func TestCopy(t *testing.T) {
+	pkg := deb.NewPackage("a", "1", "me", "desc")
+	npkg := deb.Copy(pkg)
+	if pkg == npkg {
+		t.Errorf("Copy returned the same reference - not a copy")
+	}
+	if pkg.Name != npkg.Name {
+		t.Errorf("Copy didn't copy the same Name value")
+	}
+	t.Logf("Original: %+v", pkg)
+	t.Logf("Copy:     %+v", npkg)
 }
+
+

@@ -19,7 +19,6 @@ package deb
 import (
 	"fmt"
 	"github.com/laher/argo/ar"
-	"github.com/laher/debgo-v0.2/targz"
 	"io"
 	"os"
 	"path/filepath"
@@ -31,14 +30,14 @@ type Deb struct {
 	Architecture        Architecture
 	Filename            string
 	DebianBinaryVersion string
-	ControlArchFile     string
-	DataArchFile        string
+	DebianArchive     string
+	DataArchive        string
 	MappedFiles         map[string]string
 }
 
-// GetDebs gets and returns an artifact for each architecture.
+// NewDebs gets and returns an artifact for each architecture.
 // Returns an error if the package's architecture is un-parseable
-func GetDebs(pkg *Package) (map[Architecture]*Deb, error) {
+func NewDebs(pkg *Package) (map[Architecture]*Deb, error) {
 	arches, err := pkg.GetArches()
 	if err != nil {
 		return nil, err
@@ -56,26 +55,6 @@ func NewDeb(pkg *Package, architecture Architecture) *Deb {
 	bdeb := &Deb{Package: pkg, Architecture: architecture}
 	bdeb.SetDefaults()
 	return bdeb
-}
-
-// InitControlArchive initialises and returns the 'control.tar.gz' archive
-func (bdeb *Deb) InitControlArchive(build *BuildParams) (*targz.Writer, error) {
-	archiveFilename := filepath.Join(build.TmpDir, "control.tar.gz")
-	tgzw, err := targz.NewWriterFromFile(archiveFilename)
-	if err != nil {
-		return nil, err
-	}
-	return tgzw, err
-}
-
-// InitDataArchive initialises and returns the 'data.tar.gz' archive
-func (bdeb *Deb) InitDataArchive(build *BuildParams) (*targz.Writer, error) {
-	archiveFilename := filepath.Join(build.TmpDir, BinaryDataArchiveNameDefault)
-	tgzw, err := targz.NewWriterFromFile(archiveFilename)
-	if err != nil {
-		return nil, err
-	}
-	return tgzw, err
 }
 
 // GetReader opens up a new .ar reader
@@ -131,8 +110,8 @@ func (bdeb *Deb) ExtractAll(build *BuildParams) ([]string, error) {
 func (bdeb *Deb) SetDefaults() {
 	bdeb.Filename = fmt.Sprintf("%s_%s_%s.deb", bdeb.Package.Name, bdeb.Package.Version, bdeb.Architecture) //goxc_0.5.2_i386.deb")
 	bdeb.DebianBinaryVersion = DebianBinaryVersionDefault
-	bdeb.ControlArchFile = BinaryControlArchiveNameDefault
-	bdeb.DataArchFile = BinaryDataArchiveNameDefault
+	bdeb.DebianArchive = BinaryControlArchiveNameDefault
+	bdeb.DataArchive = BinaryDataArchiveNameDefault
 }
 
 func (bdeb *Deb) WriteBytes(aw *ar.Writer, filename string, bytes []byte) error {
@@ -176,11 +155,12 @@ func (bdeb *Deb) WriteFromFile(aw *ar.Writer, filename string) error {
 
 }
 
-func (bdeb *Deb) Build(build *BuildParams) error {
-	wtr, err := os.Create(filepath.Join(build.DestDir, bdeb.Filename))
+func (bdeb *Deb) Build(tempDir, destDir string) error {
+	wtr, err := os.Create(filepath.Join(destDir, bdeb.Filename))
 	if err != nil {
 		return err
 	}
+	defer wtr.Close()
 
 	aw := ar.NewWriter(wtr)
 
@@ -188,11 +168,11 @@ func (bdeb *Deb) Build(build *BuildParams) error {
 	if err != nil {
 		return fmt.Errorf("Error writing debian-binary into .ar archive: %v", err)
 	}
-	err = bdeb.WriteFromFile(aw, filepath.Join(build.TmpDir, bdeb.ControlArchFile))
+	err = bdeb.WriteFromFile(aw, filepath.Join(tempDir, bdeb.DebianArchive))
 	if err != nil {
 		return fmt.Errorf("Error writing control archive into .ar archive: %v", err)
 	}
-	err = bdeb.WriteFromFile(aw, filepath.Join(build.TmpDir, bdeb.DataArchFile))
+	err = bdeb.WriteFromFile(aw, filepath.Join(tempDir, bdeb.DataArchive))
 	if err != nil {
 		return fmt.Errorf("Error writing data archive into .ar archive: %v", err)
 	}

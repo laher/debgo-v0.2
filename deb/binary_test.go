@@ -3,6 +3,7 @@ package deb_test
 import (
 	"archive/tar"
 	"github.com/laher/debgo-v0.2/deb"
+	"github.com/laher/debgo-v0.2/targz"
 	"log"
 	"os"
 	"path/filepath"
@@ -28,20 +29,20 @@ func Example_buildBinaryDeb() {
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	artifacts, err := deb.GetDebs(pkg)
+	artifacts, err := deb.NewDebs(pkg)
 	if err != nil {
 		log.Fatalf("Error building binary: %v", err)
 	}
 	artifacts[deb.ArchAmd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
 	artifacts[deb.ArchI386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
 	artifacts[deb.ArchArmhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
-	buildDeb := func(art *deb.Deb, build *deb.BuildParams) error {
+	buildDeb := func(art *deb.Deb) error {
 		//generate artifact here ...
 		return nil
 	}
 	for arch, artifact := range artifacts {
 		//build binary deb here ...
-		err = buildDeb(artifact, build)
+		err = buildDeb(artifact)
 		if err != nil {
 			log.Fatalf("Error building for '%s': %v", arch, err)
 		}
@@ -66,7 +67,7 @@ func Test_buildBinaryDeb(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	artifacts, err := deb.GetDebs(pkg)
+	artifacts, err := deb.NewDebs(pkg)
 	if err != nil {
 		t.Fatalf("Error building binary: %v", err)
 	}
@@ -74,7 +75,8 @@ func Test_buildBinaryDeb(t *testing.T) {
 	artifacts[deb.ArchI386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
 	artifacts[deb.ArchArmhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
 	buildDeb := func(art *deb.Deb, build *deb.BuildParams) error {
-		controlTgzw, err := art.InitControlArchive(build)
+		archiveFilename := filepath.Join(build.TmpDir, art.DebianArchive)
+		controlTgzw, err := targz.NewWriterFromFile(archiveFilename)
 		if err != nil {
 			return err
 		}
@@ -93,7 +95,9 @@ func Test_buildBinaryDeb(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		dataTgzw, err := art.InitDataArchive(build)
+
+		archiveFilename = filepath.Join(build.TmpDir, art.DataArchive)
+		dataTgzw, err := targz.NewWriterFromFile(archiveFilename)
 		if err != nil {
 			return err
 		}
@@ -103,7 +107,7 @@ func Test_buildBinaryDeb(t *testing.T) {
 			return err
 		}
 		//generate artifact here ...
-		err = art.Build(build)
+		err = art.Build(build.TmpDir, build.DestDir)
 		if err != nil {
 			return err
 		}

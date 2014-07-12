@@ -16,6 +16,11 @@
 
 package deb
 
+import(
+	"log"
+	"reflect"
+)
+
 // Package is the base unit for this library.
 // A *Package contains metadata.
 type Package struct {
@@ -29,7 +34,19 @@ type Package struct {
 	Architecture string // Supported values: "all", "x386", "amd64", "armhf". TODO: armel
 
 	Depends      string // Depends
+	Recommends string
+	Suggests string
+	Enhances string
+	PreDepends string
+	Conflicts string
+	Breaks string
+	Provides string
+	Replaces string
+
 	BuildDepends string // BuildDepends is only required for "sourcedebs".
+	BuildDependsIndep string
+	ConflictsIndep string
+	BuiltUsing string
 
 	Priority         string
 	StandardsVersion string
@@ -67,6 +84,8 @@ func (pkg *Package) GetArches() ([]Architecture, error) {
 	return arches, err
 }
 
+// SetField sets a control field by name
+// Unrecognised keys are added to AdditionalControlData
 func (pkg *Package) SetField(key, value string) {
 	switch key {
 	case "Package":
@@ -92,12 +111,27 @@ func (pkg *Package) SetField(key, value string) {
 	case "Section":
 		pkg.Section = value
 	case "Format":
-		pkg.Section = value
+		pkg.Format = value
 	case "Status":
-		pkg.Section = value
+		pkg.Status = value
 	case "Other":
-		pkg.Section = value
+		pkg.Other = value
 	default:
 		pkg.AdditionalControlData[key] = value
 	}
+}
+
+func Copy(pkg *Package) *Package {
+	//ptype := reflect.TypeOf(pkg)
+	npkg := &Package{}
+	pkgVal := reflect.ValueOf(pkg).Elem()
+	npkgVal := reflect.ValueOf(npkg).Elem()
+	ptype := pkgVal.Type()
+	for i:=0; i<ptype.NumField(); i++ {
+		source := pkgVal.Field(i)
+		dest := npkgVal.Field(i)
+		log.Printf("%v => %v", source, dest)
+		dest.Set(source)
+	}
+	return npkg
 }

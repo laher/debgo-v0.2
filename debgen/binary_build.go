@@ -27,23 +27,23 @@ import (
 var ()
 
 // This is the default build process for a BuildArtifact
-func GenDeb(archArtifact *deb.Deb, build *deb.BuildParams) error {
+func GenDeb(bdeb *deb.Deb, build *deb.BuildParams) error {
 	if build.IsVerbose {
-		log.Printf("trying to write control file for %s", archArtifact.Architecture)
+		log.Printf("trying to write control file for %s", bdeb.Architecture)
 	}
 
-	_, err := GenControlArchive(archArtifact, build)
+	_, err := GenControlArchive(bdeb, build)
 	if err != nil {
 		return err
 	}
-	_, err = GenDataArchive(archArtifact, build)
+	_, err = GenDataArchive(bdeb, build)
 	if err != nil {
 		return err
 	}
 	if build.IsVerbose {
-		log.Printf("trying to write .deb file for %s", archArtifact.Architecture)
+		log.Printf("trying to write .deb file for %s", bdeb.Architecture)
 	}
-	err = archArtifact.Build(build)
+	err = bdeb.Build(build.TmpDir, build.DestDir)
 	if err != nil {
 		return err
 	}
@@ -53,13 +53,14 @@ func GenDeb(archArtifact *deb.Deb, build *deb.BuildParams) error {
 	return err
 }
 
-func GenControlArchive(archArtifact *deb.Deb, build *deb.BuildParams) (string, error) {
-	controlTgzw, err := archArtifact.InitControlArchive(build)
+func GenControlArchive(bdeb *deb.Deb, build *deb.BuildParams) (string, error) {
+	archiveFilename := filepath.Join(build.TmpDir, bdeb.DebianArchive)
+	controlTgzw, err := targz.NewWriterFromFile(archiveFilename)
 	if err != nil {
 		return "", err
 	}
-	templateVars := &TemplateData{Package: archArtifact.Package, Deb: archArtifact}
-	//templateVars.Deb = archArtifact
+	templateVars := &TemplateData{Package: bdeb.Package, Deb: bdeb}
+	//templateVars.Deb = bdeb
 
 	err = GenControlFile(controlTgzw, templateVars, build)
 	if err != nil {
@@ -104,12 +105,13 @@ func GenControlArchive(archArtifact *deb.Deb, build *deb.BuildParams) (string, e
 	return controlTgzw.Filename, err
 }
 
-func GenDataArchive(archArtifact *deb.Deb, build *deb.BuildParams) (string, error) {
-	dataTgzw, err := archArtifact.InitDataArchive(build)
+func GenDataArchive(bdeb *deb.Deb, build *deb.BuildParams) (string, error) {
+	archiveFilename := filepath.Join(build.TmpDir, bdeb.DataArchive)
+	dataTgzw, err := targz.NewWriterFromFile(archiveFilename)
 	if err != nil {
 		return "", err
 	}
-	err = TarAddFiles(dataTgzw.Tw, archArtifact.MappedFiles)
+	err = TarAddFiles(dataTgzw.Tw, bdeb.MappedFiles)
 	if err != nil {
 		return "", err
 	}
@@ -117,7 +119,7 @@ func GenDataArchive(archArtifact *deb.Deb, build *deb.BuildParams) (string, erro
 		log.Printf("Added executables")
 	}
 	// TODO add README.debian automatically
-	err = TarAddFiles(dataTgzw.Tw, archArtifact.Package.MappedFiles)
+	err = TarAddFiles(dataTgzw.Tw, bdeb.Package.MappedFiles)
 	if err != nil {
 		return "", err
 	}
