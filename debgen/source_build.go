@@ -88,7 +88,7 @@ func GenSourceDebianArchive(spkg *deb.SourcePackage, build *BuildParams) error {
 	resourceDir := filepath.Join(build.TemplateDir, "source", DebianDir)
 	templateDir := filepath.Join(build.TemplateDir, "source", DebianDir)
 
-	for debianFile, defaultTemplateStr := range SourceDebianFiles {
+	for debianFile, defaultTemplateStr := range build.TemplateStringsSource {
 		debianFilePath := strings.Replace(debianFile, "/", string(os.PathSeparator), -1) //fixing source/options, source/format for local files
 		resourcePath := filepath.Join(resourceDir, debianFilePath)
 		_, err = os.Stat(resourcePath)

@@ -12,12 +12,8 @@ func main() {
 	log.SetPrefix("[" + name + "] ")
 	//set to empty strings because they're being overridden
 	pkg := deb.NewPackage("", "", "", "")
-	debgen.ApplyGoDefaults(pkg)
 	build := debgen.NewBuildParams()
-	err := build.Init()
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
+	debgen.ApplyGoDefaults(pkg, build)
 	fs := cmdutils.InitFlags(name, pkg, build)
 	fs.StringVar(&pkg.Architecture, "arch", "all", "Architectures [any,386,armhf,amd64,all]")
 
@@ -27,11 +23,14 @@ func main() {
 	fs.StringVar(&sourceDir, "sources", ".", "source dir")
 	fs.StringVar(&glob, "sources-glob", debgen.GlobGoSources, "Glob for inclusion of sources")
 	fs.StringVar(&sourcesRelativeTo, "sources-relative-to", "", "Sources relative to (it will assume relevant gopath element, unless you specify this)")
-	err = cmdutils.ParseFlags(name, pkg, fs)
+	err := cmdutils.ParseFlags(name, pkg, fs)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-
+	err = build.Init()
+	if err != nil {
+		log.Fatalf("Error creating build directories: %v", err)
+	}
 	if sourcesRelativeTo == "" {
 		sourcesRelativeTo = debgen.GetGoPathElement(sourceDir)
 	}

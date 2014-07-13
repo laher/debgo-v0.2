@@ -14,8 +14,8 @@ func main() {
 	log.SetPrefix("[" + name + "] ")
 	//set to empty strings because they're being overridden
 	pkg := deb.NewPackage("", "", "", "")
-	debgen.ApplyGoDefaults(pkg)
 	build := debgen.NewBuildParams()
+	debgen.ApplyGoDefaults(pkg, build)
 	fs := cmdutils.InitFlags(name, pkg, build)
 
 	var binDir string

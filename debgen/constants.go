@@ -12,7 +12,17 @@ tar-ignore = .git
 tar-ignore = .bzr` //specifies files to ignore while building.
 
 	// The debian rules file describes how to build a 'source deb' into a binary deb. The default template here invokes debhelper scripts to automate this process for simple cases.
-	TemplateDebianRules = `#!/usr/bin/make -f
+	TemplateDebianRulesDefault = `#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+%:
+        dh $@`
+
+	// The debian rules file describes how to build a 'source deb' into a binary deb. This version contains a special script for building go packages.
+	TemplateDebianRulesForGo = `#!/usr/bin/make -f
 # -*- makefile -*-
 
 # Uncomment this to turn on verbose mode.
@@ -124,10 +134,10 @@ Files:{{range .Checksums.ChecksumsMd5}}
 )
 
 var (
-	SourceDebianFiles = map[string]string{
+	TemplateStringsSourceDefault = map[string]string{
 		"control":        TemplateSourcedebControl,
 		"compat":         deb.DebianCompatDefault,
-		"rules":          TemplateDebianRules,
+		"rules":          TemplateDebianRulesDefault,
 		"source/format":  TemplateDebianSourceFormat,
 		"source/options": TemplateDebianSourceOptions,
 		"copyright":      TemplateDebianCopyright,

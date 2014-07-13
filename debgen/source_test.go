@@ -9,11 +9,10 @@ import (
 func Example_genSourcePackage() {
 
 	pkg := deb.NewPackage("testpkg", "0.0.2", "me <a@me.org>", "Dummy package for doing nothing\n")
-	debgen.ApplyGoDefaults(pkg)
-
-	spkg := deb.NewSourcePackage(pkg)
 	build := debgen.NewBuildParams()
 	build.IsRmtemp = false
+	debgen.ApplyGoDefaults(pkg, build)
+	spkg := deb.NewSourcePackage(pkg)
 	err := build.Init()
 	if err != nil {
 		log.Fatalf("Error initializing dirs: %v", err)
