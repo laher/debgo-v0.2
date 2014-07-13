@@ -27,16 +27,16 @@ import (
 var ()
 
 // This is the default build process for a BuildArtifact
-func GenDeb(bdeb *deb.Deb, build *BuildParams) error {
+func GenDeb(bdeb *deb.DebWriter, build *BuildParams) error {
 	if build.IsVerbose {
 		log.Printf("trying to write control file for %s", bdeb.Architecture)
 	}
 
-	_, err := GenControlArchive(bdeb, build)
+	err := GenControlArchive(bdeb, build)
 	if err != nil {
 		return err
 	}
-	_, err = GenDataArchive(bdeb, build)
+	err = GenDataArchive(bdeb, build)
 	if err != nil {
 		return err
 	}
@@ -53,18 +53,18 @@ func GenDeb(bdeb *deb.Deb, build *BuildParams) error {
 	return err
 }
 
-func GenControlArchive(bdeb *deb.Deb, build *BuildParams) (string, error) {
-	archiveFilename := filepath.Join(build.TmpDir, bdeb.DebianArchive)
+func GenControlArchive(bdeb *deb.DebWriter, build *BuildParams) error {
+	archiveFilename := filepath.Join(build.TmpDir, bdeb.ControlArchive)
 	controlTgzw, err := targz.NewWriterFromFile(archiveFilename)
 	if err != nil {
-		return "", err
+		return err
 	}
 	templateVars := &TemplateData{Package: bdeb.Package, Deb: bdeb}
 	//templateVars.Deb = bdeb
 
 	err = GenControlFile(controlTgzw, templateVars, build)
 	if err != nil {
-		return "", err
+		return err
 	}
 	if build.IsVerbose {
 		log.Printf("Wrote control file to control archive")
@@ -74,9 +74,9 @@ func GenControlArchive(bdeb *deb.Deb, build *BuildParams) (string, error) {
 		resourcePath := filepath.Join(build.ResourcesDir, DebianDir, scriptName)
 		_, err = os.Stat(resourcePath)
 		if err == nil {
-			err = TarAddFile(controlTgzw.Tw, resourcePath, scriptName)
+			err = TarAddFile(controlTgzw.Writer, resourcePath, scriptName)
 			if err != nil {
-				return "", err
+				return err
 			}
 		} else {
 			templatePath := filepath.Join(build.TemplateDir, DebianDir, scriptName+TplExtension)
@@ -85,11 +85,11 @@ func GenControlArchive(bdeb *deb.Deb, build *BuildParams) (string, error) {
 			if err == nil {
 				scriptData, err := TemplateFile(templatePath, templateVars)
 				if err != nil {
-					return "", err
+					return err
 				}
-				err = TarAddBytes(controlTgzw.Tw, scriptData, scriptName, 0755)
+				err = TarAddBytes(controlTgzw.Writer, scriptData, scriptName, 0755)
 				if err != nil {
-					return "", err
+					return err
 				}
 			}
 		}
@@ -97,50 +97,50 @@ func GenControlArchive(bdeb *deb.Deb, build *BuildParams) (string, error) {
 
 	err = controlTgzw.Close()
 	if err != nil {
-		return "", err
+		return err
 	}
 	if build.IsVerbose {
 		log.Printf("Closed control archive")
 	}
-	return controlTgzw.Filename, err
+	return err
 }
 
-func GenDataArchive(bdeb *deb.Deb, build *BuildParams) (string, error) {
+func GenDataArchive(bdeb *deb.DebWriter, build *BuildParams) error {
 	archiveFilename := filepath.Join(build.TmpDir, bdeb.DataArchive)
 	dataTgzw, err := targz.NewWriterFromFile(archiveFilename)
 	if err != nil {
-		return "", err
+		return err
 	}
-	err = TarAddFiles(dataTgzw.Tw, bdeb.MappedFiles)
+	err = TarAddFiles(dataTgzw.Writer, bdeb.MappedFiles)
 	if err != nil {
-		return "", err
+		return err
 	}
 	if build.IsVerbose {
 		log.Printf("Added executables")
 	}
 	// TODO add README.debian automatically
-	err = TarAddFiles(dataTgzw.Tw, bdeb.Package.MappedFiles)
+	err = TarAddFiles(dataTgzw.Writer, bdeb.Package.MappedFiles)
 	if err != nil {
-		return "", err
+		return err
 	}
 	if build.IsVerbose {
 		log.Printf("Added resources")
 	}
 	err = dataTgzw.Close()
 	if err != nil {
-		return "", err
+		return err
 	}
 	if build.IsVerbose {
 		log.Printf("Closed data archive")
 	}
-	return dataTgzw.Filename, err
+	return err
 }
 
 func GenControlFile(tgzw *targz.Writer, templateVars *TemplateData, build *BuildParams) error {
 	resourcePath := filepath.Join(build.ResourcesDir, "DEBIAN", "control")
 	_, err := os.Stat(resourcePath)
 	if err == nil {
-		err = TarAddFile(tgzw.Tw, resourcePath, "control")
+		err = TarAddFile(tgzw.Writer, resourcePath, "control")
 		return err
 	}
 	//try template or use a string
@@ -151,6 +151,6 @@ func GenControlFile(tgzw *targz.Writer, templateVars *TemplateData, build *Build
 	if build.IsVerbose {
 		log.Printf("Control file:\n%s", string(controlData))
 	}
-	err = TarAddBytes(tgzw.Tw, controlData, "control", 0644)
+	err = TarAddBytes(tgzw.Writer, controlData, "control", 0644)
 	return err
 }

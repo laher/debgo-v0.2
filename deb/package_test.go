@@ -33,5 +33,3 @@ func TestCopy(t *testing.T) {
 	t.Logf("Original: %+v", pkg)
 	t.Logf("Copy:     %+v", npkg)
 }
-
-

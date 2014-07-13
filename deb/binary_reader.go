@@ -27,7 +27,7 @@ import (
 	"strings"
 )
 
-func Contents(rdr io.Reader, topLevelFilename string) ([]string, error) {
+func DebGetContents(rdr io.Reader, topLevelFilename string) ([]string, error) {
 	ret := []string{}
 	fileNotFound := true
 	arr, err := ar.NewReader(rdr)
@@ -70,7 +70,7 @@ func Contents(rdr io.Reader, topLevelFilename string) ([]string, error) {
 	return ret, nil
 }
 
-func ExtractFileL2(rdr io.Reader, topLevelFilename string, secondLevelFilename string, destination io.Writer) error {
+func DebExtractFileL2(rdr io.Reader, topLevelFilename string, secondLevelFilename string, destination io.Writer) error {
 	arr, err := ar.NewReader(rdr)
 	if err != nil {
 		return err
@@ -116,15 +116,14 @@ func ExtractFileL2(rdr io.Reader, topLevelFilename string, secondLevelFilename s
 }
 
 // ParseDebMetadata reads an artifact's contents.
-func ParseDebMetadata(rdr io.Reader) (*Deb, error) {
+func DebParseMetadata(rdr io.Reader) (*Package, error) {
 
 	arr, err := ar.NewReader(rdr)
 	if err != nil {
 		return nil, err
 	}
 
-	art := &Deb{}
-	art.Package = &Package{}
+	pkg := &Package{}
 
 	hasDataArchive := false
 	hasControlArchive := false
@@ -175,7 +174,7 @@ func ParseDebMetadata(rdr io.Reader) (*Deb, error) {
 						if strings.Contains(line, ":") {
 							res := strings.SplitN(line, ":", 2)
 							log.Printf("Control File entry: '%s': %s", res[0], res[1])
-							art.Package.SetField(res[0], res[1])
+							pkg.SetField(res[0], res[1])
 						}
 					}
 
@@ -211,5 +210,5 @@ func ParseDebMetadata(rdr io.Reader) (*Deb, error) {
 	if !hasControlFile {
 		return nil, fmt.Errorf("No debian/control file in control.tar.gz")
 	}
-	return art, nil
+	return pkg, nil
 }

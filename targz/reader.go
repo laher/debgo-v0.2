@@ -27,23 +27,24 @@ import (
 // The Next method advances to the next file in the archive (including the first),
 // and then it can be treated as an io.Reader to access the file's data.
 type Reader struct {
-	r  io.Reader
-	Gr *gzip.Reader
-	Tr *tar.Reader
+	*tar.Reader
+	WrappedReader io.Reader
+	GzipReader    *gzip.Reader
 }
 
 // NewReader creates a new Reader reading from r.
 func NewReader(r io.Reader) (*Reader, error) {
-	tgzr := &Reader{r: r}
+	tgzr := &Reader{WrappedReader: r}
 	var err error
-	tgzr.Gr, err = gzip.NewReader(tgzr.r)
+	tgzr.GzipReader, err = gzip.NewReader(tgzr.WrappedReader)
 	if err != nil {
 		return nil, err
 	}
-	tgzr.Tr = tar.NewReader(tgzr.Gr)
+	tgzr.Reader = tar.NewReader(tgzr.GzipReader)
 	return tgzr, err
 }
 
+/*
 func (r *Reader) Next() (*tar.Header, error) {
 	return r.Tr.Next()
 }
@@ -51,10 +52,10 @@ func (r *Reader) Next() (*tar.Header, error) {
 func (r *Reader) Read(b []byte) (int, error) {
 	return r.Tr.Read(b)
 }
+*/
 
 // Close closes the gzip reader
-// TODO: close Fw if possible?
 func (tgzr *Reader) Close() error {
-	err := tgzr.Gr.Close()
+	err := tgzr.GzipReader.Close()
 	return err
 }

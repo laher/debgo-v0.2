@@ -45,10 +45,10 @@ func Example() {
 			Name: file.Name,
 			Size: int64(len(file.Body)),
 		}
-		if err := tgzw.Tw.WriteHeader(hdr); err != nil {
+		if err := tgzw.WriteHeader(hdr); err != nil {
 			log.Fatalln(err)
 		}
-		if _, err := tgzw.Tw.Write([]byte(file.Body)); err != nil {
+		if _, err := tgzw.Write([]byte(file.Body)); err != nil {
 			log.Fatalln(err)
 		}
 	}
@@ -105,12 +105,11 @@ func reader(isFs bool, w io.Writer) io.Reader {
 			log.Fatalln(err)
 		}
 		return r
-	} else {
-		buf := w.(*bytes.Buffer)
-		// Open the ar archive for reading.
-		r := bytes.NewReader(buf.Bytes())
-		return r
 	}
+	buf := w.(*bytes.Buffer)
+	// Open the ar archive for reading.
+	r := bytes.NewReader(buf.Bytes())
+	return r
 
 }
 
@@ -121,8 +120,7 @@ func writer(isFs bool) io.Writer {
 			log.Fatalln(err)
 		}
 		return fi
-	} else {
-		return new(bytes.Buffer)
 	}
+	return new(bytes.Buffer)
 
 }

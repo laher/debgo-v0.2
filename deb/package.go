@@ -16,7 +16,7 @@
 
 package deb
 
-import(
+import (
 	"log"
 	"reflect"
 )
@@ -33,20 +33,20 @@ type Package struct {
 
 	Architecture string // Supported values: "all", "x386", "amd64", "armhf". TODO: armel
 
-	Depends      string // Depends
+	Depends    string // Depends
 	Recommends string
-	Suggests string
-	Enhances string
+	Suggests   string
+	Enhances   string
 	PreDepends string
-	Conflicts string
-	Breaks string
-	Provides string
-	Replaces string
+	Conflicts  string
+	Breaks     string
+	Provides   string
+	Replaces   string
 
-	BuildDepends string // BuildDepends is only required for "sourcedebs".
+	BuildDepends      string // BuildDepends is only required for "sourcedebs".
 	BuildDependsIndep string
-	ConflictsIndep string
-	BuiltUsing string
+	ConflictsIndep    string
+	BuiltUsing        string
 
 	Priority         string
 	StandardsVersion string
@@ -132,7 +132,7 @@ func Copy(pkg *Package) *Package {
 	pkgVal := reflect.ValueOf(pkg).Elem()
 	npkgVal := reflect.ValueOf(npkg).Elem()
 	ptype := pkgVal.Type()
-	for i:=0; i<ptype.NumField(); i++ {
+	for i := 0; i < ptype.NumField(); i++ {
 		source := pkgVal.Field(i)
 		dest := npkgVal.Field(i)
 		log.Printf("%v => %v", source, dest)

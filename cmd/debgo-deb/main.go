@@ -43,7 +43,7 @@ func main() {
 				log.Fatalf("%v", err)
 			}
 			log.Printf("File: %+v", debFile)
-			err = deb.ExtractFileL2(rdr, "control.tar.gz", "control", os.Stdout)
+			err = deb.DebExtractFileL2(rdr, "control.tar.gz", "control", os.Stdout)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
@@ -56,7 +56,7 @@ func main() {
 				log.Fatalf("%v", err)
 			}
 			log.Printf("File: %+v", debFile)
-			files, err := deb.Contents(rdr, "data.tar.gz")
+			files, err := deb.DebGetContents(rdr, "data.tar.gz")
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
@@ -71,7 +71,7 @@ func main() {
 				log.Fatalf("%v", err)
 			}
 			log.Printf("File: %+v", debFile)
-			files, err := deb.Contents(rdr, "control.tar.gz")
+			files, err := deb.DebGetContents(rdr, "control.tar.gz")
 			if err != nil {
 				log.Fatalf("%v", err)
 			}

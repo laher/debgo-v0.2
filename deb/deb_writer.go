@@ -24,41 +24,41 @@ import (
 	"path/filepath"
 )
 
-// Deb is an architecture-specific deb
-type Deb struct {
+// DebWriter is an architecture-specific deb
+type DebWriter struct {
 	Package             *Package
 	Architecture        Architecture
 	Filename            string
 	DebianBinaryVersion string
-	DebianArchive     string
-	DataArchive        string
+	ControlArchive       string
+	DataArchive         string
 	MappedFiles         map[string]string
 }
 
-// NewDebs gets and returns an artifact for each architecture.
+// NewDebWriters gets and returns an artifact for each architecture.
 // Returns an error if the package's architecture is un-parseable
-func NewDebs(pkg *Package) (map[Architecture]*Deb, error) {
+func NewDebWriters(pkg *Package) (map[Architecture]*DebWriter, error) {
 	arches, err := pkg.GetArches()
 	if err != nil {
 		return nil, err
 	}
-	ret := map[Architecture]*Deb{}
+	ret := map[Architecture]*DebWriter{}
 	for _, arch := range arches {
-		archArtifact := NewDeb(pkg, arch)
+		archArtifact := NewDebWriter(pkg, arch)
 		ret[arch] = archArtifact
 	}
 	return ret, nil
 }
 
 // Factory of platform build information
-func NewDeb(pkg *Package, architecture Architecture) *Deb {
-	bdeb := &Deb{Package: pkg, Architecture: architecture}
+func NewDebWriter(pkg *Package, architecture Architecture) *DebWriter {
+	bdeb := &DebWriter{Package: pkg, Architecture: architecture}
 	bdeb.SetDefaults()
 	return bdeb
 }
 
 // GetReader opens up a new .ar reader
-func (bdeb *Deb) GetReader() (*ar.Reader, error) {
+func (bdeb *DebWriter) GetReader() (*ar.Reader, error) {
 	fi, err := os.Open(bdeb.Filename)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (bdeb *Deb) GetReader() (*ar.Reader, error) {
 // ExtractAll extracts all contents from the Ar archive.
 // It returns a slice of all filenames.
 // In case of any error, it returns the error immediately
-func (bdeb *Deb) ExtractAll(destDir string) ([]string, error) {
+func (bdeb *DebWriter) ExtractAll(destDir string) ([]string, error) {
 	arr, err := bdeb.GetReader()
 	if err != nil {
 		return nil, err
@@ -107,14 +107,15 @@ func (bdeb *Deb) ExtractAll(destDir string) ([]string, error) {
 	return filenames, nil
 }
 
-func (bdeb *Deb) SetDefaults() {
+// SetDefaults sets some default properties
+func (bdeb *DebWriter) SetDefaults() {
 	bdeb.Filename = fmt.Sprintf("%s_%s_%s.deb", bdeb.Package.Name, bdeb.Package.Version, bdeb.Architecture) //goxc_0.5.2_i386.deb")
 	bdeb.DebianBinaryVersion = DebianBinaryVersionDefault
-	bdeb.DebianArchive = BinaryControlArchiveNameDefault
+	bdeb.ControlArchive = BinaryControlArchiveNameDefault
 	bdeb.DataArchive = BinaryDataArchiveNameDefault
 }
 
-func (bdeb *Deb) WriteBytes(aw *ar.Writer, filename string, bytes []byte) error {
+func (bdeb *DebWriter) writeBytes(aw *ar.Writer, filename string, bytes []byte) error {
 	hdr := &ar.Header{
 		Name: filename,
 		Size: int64(len(bytes))}
@@ -127,7 +128,7 @@ func (bdeb *Deb) WriteBytes(aw *ar.Writer, filename string, bytes []byte) error 
 	return nil
 }
 
-func (bdeb *Deb) WriteFromFile(aw *ar.Writer, filename string) error {
+func (bdeb *DebWriter) writeFromFile(aw *ar.Writer, filename string) error {
 	finf, err := os.Stat(filename)
 	if err != nil {
 		return err
@@ -155,7 +156,7 @@ func (bdeb *Deb) WriteFromFile(aw *ar.Writer, filename string) error {
 
 }
 
-func (bdeb *Deb) Build(tempDir, destDir string) error {
+func (bdeb *DebWriter) Build(tempDir, destDir string) error {
 	wtr, err := os.Create(filepath.Join(destDir, bdeb.Filename))
 	if err != nil {
 		return err
@@ -164,15 +165,15 @@ func (bdeb *Deb) Build(tempDir, destDir string) error {
 
 	aw := ar.NewWriter(wtr)
 
-	err = bdeb.WriteBytes(aw, "debian-binary", []byte(bdeb.DebianBinaryVersion+"\n"))
+	err = bdeb.writeBytes(aw, "debian-binary", []byte(bdeb.DebianBinaryVersion+"\n"))
 	if err != nil {
 		return fmt.Errorf("Error writing debian-binary into .ar archive: %v", err)
 	}
-	err = bdeb.WriteFromFile(aw, filepath.Join(tempDir, bdeb.DebianArchive))
+	err = bdeb.writeFromFile(aw, filepath.Join(tempDir, bdeb.ControlArchive))
 	if err != nil {
 		return fmt.Errorf("Error writing control archive into .ar archive: %v", err)
 	}
-	err = bdeb.WriteFromFile(aw, filepath.Join(tempDir, bdeb.DataArchive))
+	err = bdeb.writeFromFile(aw, filepath.Join(tempDir, bdeb.DataArchive))
 	if err != nil {
 		return fmt.Errorf("Error writing data archive into .ar archive: %v", err)
 	}

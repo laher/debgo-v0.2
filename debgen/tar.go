@@ -32,7 +32,7 @@ func TarHeader(path string, datalen int64, mode int64) *tar.Header {
 	//slash-only paths
 	h.Name = strings.Replace(path, "\\", "/", -1)
 	if strings.HasPrefix(h.Name, "/") {
-		h.Name = h.Name[1:]
+		h.Name = "." + h.Name
 	}
 	h.Size = datalen
 	h.Mode = mode

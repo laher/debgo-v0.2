@@ -18,8 +18,8 @@ package debgen
 
 import (
 	"errors"
-	"os"
 	"github.com/laher/debgo-v0.2/deb"
+	"os"
 )
 
 // BuildParams provides information about a particular build

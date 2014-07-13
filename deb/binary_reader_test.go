@@ -16,11 +16,11 @@ func XTest_parse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	art, err := deb.ParseDebMetadata(rdr)
+	pkg, err := deb.DebParseMetadata(rdr)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	t.Logf("Package: %+v", art.Package)
+	t.Logf("Package: %+v", pkg)
 }
 
 //Reading an ar archive ...

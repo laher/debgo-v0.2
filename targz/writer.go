@@ -24,49 +24,45 @@ import (
 	"os"
 )
 
-// Writer encapsulates the tar, gz and file operations of a TarGz file
+// Writer encapsulates the tar, gz and file operations of a .tar.gz file.
 type Writer struct {
-	Filename string       // Filename
-	Fw       io.Writer    // File writer
-	Tw       *tar.Writer  // Tar writer (wraps the io.writer)
-	Gw       *gzip.Writer // Gzip writer (wraps the tar writer)
+	*tar.Writer // Tar writer (wraps the GzipWriter)
+	//Filename string       // Filename
+	WrappedWriter io.Writer    // File writer
+	GzipWriter    *gzip.Writer // Gzip writer (wraps the WrappedWriter)
 }
 
-// Close closes all 3 writers
+// Close closes all 3 writers.
 // Returns the first error
-// TODO: close Fw if possible?
 func (tgzw *Writer) Close() error {
-	err1 := tgzw.Tw.Close()
-	err2 := tgzw.Gw.Close()
-	//err3 := tgzw.Fw.Close()
+	err1 := tgzw.Writer.Close()
+	err2 := tgzw.GzipWriter.Close()
 	if err1 != nil {
 		return fmt.Errorf("Error closing Tar Writer %v", err1)
 	}
 	if err2 != nil {
 		return fmt.Errorf("Error closing Gzip Writer %v", err2)
 	}
-	//return err3
 	return nil
 }
 
-// NewWriter is a factory for Writer
+// NewWriterFromFile is a factory for Writer
 func NewWriterFromFile(archiveFilename string) (*Writer, error) {
 	fw, err := os.Create(archiveFilename)
 	if err != nil {
 		return nil, err
 	}
 	tgzw := NewWriter(fw)
-	tgzw.Filename = archiveFilename
 	return tgzw, err
 }
 
-// Create creates the file on disk, and
-// wraps the io.Writer with a Tar writer and Gzip writer
+// NewWriter is a factory for Writer.
+// It wraps the io.Writer with a Tar writer and Gzip writer
 func NewWriter(w io.Writer) *Writer {
-	tgzw := &Writer{Fw: w}
+	tgzw := &Writer{WrappedWriter: w}
 	// gzip writer
-	tgzw.Gw = gzip.NewWriter(tgzw.Fw)
+	tgzw.GzipWriter = gzip.NewWriter(w)
 	// tar writer
-	tgzw.Tw = tar.NewWriter(tgzw.Gw)
+	tgzw.Writer = tar.NewWriter(tgzw.GzipWriter)
 	return tgzw
 }

@@ -49,7 +49,7 @@ func main() {
 	//log.Printf("Resources: %v", build.Resources)
 	// TODO determine this platform
 	//err = bpkg.Build(build, debgen.GenBinaryArtifact)
-	artifacts, err := deb.NewDebs(pkg)
+	artifacts, err := deb.NewDebWriters(pkg)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}

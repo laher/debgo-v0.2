@@ -23,14 +23,14 @@ func Example_buildBinaryDeb() {
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	artifacts, err := deb.NewDebs(pkg)
+	artifacts, err := deb.NewDebWriters(pkg)
 	if err != nil {
 		log.Fatalf("Error building binary: %v", err)
 	}
 	artifacts[deb.ArchAmd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
 	artifacts[deb.ArchI386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
 	artifacts[deb.ArchArmhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
-	buildDeb := func(art *deb.Deb) error {
+	buildDeb := func(art *deb.DebWriter) error {
 		//generate artifact here ...
 		return nil
 	}
@@ -54,15 +54,15 @@ func Test_buildBinaryDeb(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	artifacts, err := deb.NewDebs(pkg)
+	artifacts, err := deb.NewDebWriters(pkg)
 	if err != nil {
 		t.Fatalf("Error building binary: %v", err)
 	}
 	artifacts[deb.ArchAmd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
 	artifacts[deb.ArchI386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
 	artifacts[deb.ArchArmhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
-	buildDeb := func(art *deb.Deb) error {
-		archiveFilename := filepath.Join(deb.TempDirDefault, art.DebianArchive)
+	buildDeb := func(art *deb.DebWriter) error {
+		archiveFilename := filepath.Join(deb.TempDirDefault, art.ControlArchive)
 		controlTgzw, err := targz.NewWriterFromFile(archiveFilename)
 		if err != nil {
 			return err
@@ -70,11 +70,11 @@ func Test_buildBinaryDeb(t *testing.T) {
 		controlData := []byte("Package: testpkg\n")
 		//TODO add more files here ...
 		header := &tar.Header{Name: "control", Size: int64(len(controlData)), Mode: int64(644), ModTime: time.Now()}
-		err = controlTgzw.Tw.WriteHeader(header)
+		err = controlTgzw.WriteHeader(header)
 		if err != nil {
 			return err
 		}
-		_, err = controlTgzw.Tw.Write(controlData)
+		_, err = controlTgzw.Write(controlData)
 		if err != nil {
 			return err
 		}

@@ -57,11 +57,11 @@ func GenSourceOrigArchive(spkg *deb.SourcePackage, build *BuildParams) error {
 	if err != nil {
 		return err
 	}
-	err = TarAddFiles(tgzw.Tw, spkg.MappedFiles)
+	err = TarAddFiles(tgzw.Writer, spkg.MappedFiles)
 	if err != nil {
 		return err
 	}
-	err = TarAddFiles(tgzw.Tw, spkg.Package.MappedFiles)
+	err = TarAddFiles(tgzw.Writer, spkg.Package.MappedFiles)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func GenSourceDebianArchive(spkg *deb.SourcePackage, build *BuildParams) error {
 		resourcePath := filepath.Join(resourceDir, debianFilePath)
 		_, err = os.Stat(resourcePath)
 		if err == nil {
-			err = TarAddFile(tgzw.Tw, resourcePath, debianFile)
+			err = TarAddFile(tgzw.Writer, resourcePath, debianFile)
 			if err != nil {
 				return err
 			}
@@ -102,7 +102,7 @@ func GenSourceDebianArchive(spkg *deb.SourcePackage, build *BuildParams) error {
 			if err != nil {
 				return err
 			}
-			err = TarAddBytes(tgzw.Tw, controlData, DebianDir+"/"+debianFile, int64(0644))
+			err = TarAddBytes(tgzw.Writer, controlData, DebianDir+"/"+debianFile, int64(0644))
 			if err != nil {
 				return err
 			}
@@ -114,7 +114,7 @@ func GenSourceDebianArchive(spkg *deb.SourcePackage, build *BuildParams) error {
 		resourcePath := filepath.Join(build.ResourcesDir, DebianDir, scriptName)
 		_, err = os.Stat(resourcePath)
 		if err == nil {
-			err = TarAddFile(tgzw.Tw, resourcePath, scriptName)
+			err = TarAddFile(tgzw.Writer, resourcePath, scriptName)
 			if err != nil {
 				return err
 			}
@@ -127,7 +127,7 @@ func GenSourceDebianArchive(spkg *deb.SourcePackage, build *BuildParams) error {
 				if err != nil {
 					return err
 				}
-				err = TarAddBytes(tgzw.Tw, scriptData, scriptName, 0755)
+				err = TarAddBytes(tgzw.Writer, scriptData, scriptName, 0755)
 				if err != nil {
 					return err
 				}
@@ -141,7 +141,7 @@ func GenSourceDebianArchive(spkg *deb.SourcePackage, build *BuildParams) error {
 	}
 
 	if build.IsVerbose {
-		log.Printf("Created %s", tgzw.Filename)
+		log.Printf("Created %s", filepath.Join(build.DestDir, spkg.DebianFileName))
 	}
 	return nil
 }

@@ -17,12 +17,12 @@
 package deb
 
 // NewDevPackage is a factory for creating '-dev' packages from packages.
-// It just does a copy, appends "-dev" to the name, and sets the 
+// It just does a copy, appends "-dev" to the name, and sets the
 func NewDevPackage(pkg *Package) *Package {
 	//TODO *complete* copy of properties, using reflection?
 	devpkg := Copy(pkg)
-	devpkg.Name = pkg.Name+"-dev"
-	devpkg.Architecture  = "all"
+	devpkg.Name = pkg.Name + "-dev"
+	devpkg.Architecture = "all"
 	return devpkg
 
 }
