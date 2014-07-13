@@ -27,7 +27,7 @@ import (
 var ()
 
 // This is the default build process for a BuildArtifact
-func GenDeb(bdeb *deb.Deb, build *deb.BuildParams) error {
+func GenDeb(bdeb *deb.Deb, build *BuildParams) error {
 	if build.IsVerbose {
 		log.Printf("trying to write control file for %s", bdeb.Architecture)
 	}
@@ -53,7 +53,7 @@ func GenDeb(bdeb *deb.Deb, build *deb.BuildParams) error {
 	return err
 }
 
-func GenControlArchive(bdeb *deb.Deb, build *deb.BuildParams) (string, error) {
+func GenControlArchive(bdeb *deb.Deb, build *BuildParams) (string, error) {
 	archiveFilename := filepath.Join(build.TmpDir, bdeb.DebianArchive)
 	controlTgzw, err := targz.NewWriterFromFile(archiveFilename)
 	if err != nil {
@@ -105,7 +105,7 @@ func GenControlArchive(bdeb *deb.Deb, build *deb.BuildParams) (string, error) {
 	return controlTgzw.Filename, err
 }
 
-func GenDataArchive(bdeb *deb.Deb, build *deb.BuildParams) (string, error) {
+func GenDataArchive(bdeb *deb.Deb, build *BuildParams) (string, error) {
 	archiveFilename := filepath.Join(build.TmpDir, bdeb.DataArchive)
 	dataTgzw, err := targz.NewWriterFromFile(archiveFilename)
 	if err != nil {
@@ -136,7 +136,7 @@ func GenDataArchive(bdeb *deb.Deb, build *deb.BuildParams) (string, error) {
 	return dataTgzw.Filename, err
 }
 
-func GenControlFile(tgzw *targz.Writer, templateVars *TemplateData, build *deb.BuildParams) error {
+func GenControlFile(tgzw *targz.Writer, templateVars *TemplateData, build *BuildParams) error {
 	resourcePath := filepath.Join(build.ResourcesDir, "DEBIAN", "control")
 	_, err := os.Stat(resourcePath)
 	if err == nil {

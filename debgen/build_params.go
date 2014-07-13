@@ -14,11 +14,12 @@
    limitations under the License.
 */
 
-package deb
+package debgen
 
 import (
 	"errors"
 	"os"
+	"github.com/laher/debgo-v0.2/deb"
 )
 
 // BuildParams provides information about a particular build
@@ -39,12 +40,12 @@ type BuildParams struct {
 func NewBuildParams() *BuildParams {
 	bp := &BuildParams{IsVerbose: false}
 
-	bp.TmpDir = TempDirDefault
+	bp.TmpDir = deb.TempDirDefault
 	bp.IsRmtemp = true
-	bp.DestDir = DistDirDefault
-	bp.WorkingDir = WorkingDirDefault
-	bp.TemplateDir = TemplateDirDefault
-	bp.ResourcesDir = ResourcesDirDefault
+	bp.DestDir = deb.DistDirDefault
+	bp.WorkingDir = deb.WorkingDirDefault
+	bp.TemplateDir = deb.TemplateDirDefault
+	bp.ResourcesDir = deb.ResourcesDirDefault
 	return bp
 }
 

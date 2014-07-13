@@ -13,7 +13,7 @@ func main() {
 	//set to empty strings because they're being overridden
 	pkg := deb.NewPackage("", "", "", "")
 	debgen.ApplyGoDefaults(pkg)
-	build := deb.NewBuildParams()
+	build := debgen.NewBuildParams()
 	fs := cmdutils.InitFlags(name, pkg, build)
 	fs.StringVar(&pkg.Architecture, "arch", "all", "Architectures [any,386,armhf,amd64,all]")
 	ddpkg := deb.NewDevPackage(pkg)

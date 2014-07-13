@@ -73,7 +73,7 @@ func (bdeb *Deb) GetReader() (*ar.Reader, error) {
 // ExtractAll extracts all contents from the Ar archive.
 // It returns a slice of all filenames.
 // In case of any error, it returns the error immediately
-func (bdeb *Deb) ExtractAll(build *BuildParams) ([]string, error) {
+func (bdeb *Deb) ExtractAll(destDir string) ([]string, error) {
 	arr, err := bdeb.GetReader()
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (bdeb *Deb) ExtractAll(build *BuildParams) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		outFilename := filepath.Join(build.TmpDir, hdr.Name)
+		outFilename := filepath.Join(destDir, hdr.Name)
 		//fmt.Printf("Contents of %s:\n", hdr.Name)
 		fi, err := os.Create(outFilename)
 		if err != nil {

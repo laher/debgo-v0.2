@@ -10,7 +10,7 @@ func Example_genDevPackage() {
 	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "Dummy package for doing nothing\n")
 
 	ddpkg := deb.NewDevPackage(pkg)
-	build := deb.NewBuildParams()
+	build := debgen.NewBuildParams()
 	build.IsRmtemp = false
 	build.Init()
 	var err error

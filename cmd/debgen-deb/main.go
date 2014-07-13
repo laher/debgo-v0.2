@@ -15,7 +15,7 @@ func main() {
 	//set to empty strings because they're being overridden
 	pkg := deb.NewPackage("", "", "", "")
 	debgen.ApplyGoDefaults(pkg)
-	build := deb.NewBuildParams()
+	build := debgen.NewBuildParams()
 	fs := cmdutils.InitFlags(name, pkg, build)
 
 	var binDir string
@@ -49,7 +49,7 @@ func main() {
 	//log.Printf("Resources: %v", build.Resources)
 	// TODO determine this platform
 	//err = bpkg.Build(build, debgen.GenBinaryArtifact)
-	artifacts, err := deb.GetDebs(pkg)
+	artifacts, err := deb.NewDebs(pkg)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}

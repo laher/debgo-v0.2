@@ -12,7 +12,7 @@ func Example_genBinaryPackage() {
 
 	pkg := deb.NewPackage("testpkg", "0.0.2", "me <a@me.org>", "Dummy package for doing nothing\n")
 
-	build := deb.NewBuildParams()
+	build := debgen.NewBuildParams()
 	build.Init()
 	build.IsRmtemp = false
 

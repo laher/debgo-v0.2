@@ -27,7 +27,7 @@ import (
 )
 
 // Default function for building the source archive
-func GenSourceArtifacts(spkg *deb.SourcePackage, build *deb.BuildParams) error {
+func GenSourceArtifacts(spkg *deb.SourcePackage, build *BuildParams) error {
 	//1. Build orig archive.
 	err := GenSourceOrigArchive(spkg, build)
 	if err != nil {
@@ -49,7 +49,7 @@ func GenSourceArtifacts(spkg *deb.SourcePackage, build *deb.BuildParams) error {
 
 // Builds <package>.orig.tar.gz
 // This contains all the original data.
-func GenSourceOrigArchive(spkg *deb.SourcePackage, build *deb.BuildParams) error {
+func GenSourceOrigArchive(spkg *deb.SourcePackage, build *BuildParams) error {
 	//TODO add/exclude resources to /usr/share
 	origFilePath := filepath.Join(build.DestDir, spkg.OrigFileName)
 	tgzw, err := targz.NewWriterFromFile(origFilePath)
@@ -78,7 +78,7 @@ func GenSourceOrigArchive(spkg *deb.SourcePackage, build *deb.BuildParams) error
 // Builds <package>.debian.tar.gz
 // This contains all the control data, changelog, rules, etc
 //
-func GenSourceDebianArchive(spkg *deb.SourcePackage, build *deb.BuildParams) error {
+func GenSourceDebianArchive(spkg *deb.SourcePackage, build *BuildParams) error {
 	//set up template
 	templateVars := NewTemplateData(spkg.Package)
 
@@ -146,7 +146,7 @@ func GenSourceDebianArchive(spkg *deb.SourcePackage, build *deb.BuildParams) err
 	return nil
 }
 
-func GenDscFile(spkg *deb.SourcePackage, build *deb.BuildParams) error {
+func GenDscFile(spkg *deb.SourcePackage, build *BuildParams) error {
 	//set up template
 	templateVars := NewTemplateData(spkg.Package)
 	//4. Create dsc file (calculate checksums first)

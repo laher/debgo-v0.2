@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/laher/debgo-v0.2/deb"
+	"github.com/laher/debgo-v0.2/debgen"
 	"log"
 	"os"
 )
@@ -10,7 +11,7 @@ import (
 func main() {
 	name := "debgo-deb"
 	log.SetPrefix("[" + name + "] ")
-	build := deb.NewBuildParams()
+	build := debgen.NewBuildParams()
 
 	err := build.Init()
 	if err != nil {

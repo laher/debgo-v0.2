@@ -12,7 +12,7 @@ func Example_genSourcePackage() {
 	debgen.ApplyGoDefaults(pkg)
 
 	spkg := deb.NewSourcePackage(pkg)
-	build := deb.NewBuildParams()
+	build := debgen.NewBuildParams()
 	build.IsRmtemp = false
 	err := build.Init()
 	if err != nil {

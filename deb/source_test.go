@@ -12,18 +12,16 @@ import (
 func Example_buildSourceDeb() {
 	pkg := deb.NewPackage("testpkg", "0.0.2", "me <me@b.c>", "Nice of all the package\n")
 	pkg.Description = "hiya"
-	bp := deb.NewBuildParams()
-	bp.Init()
 	spkg := deb.NewSourcePackage(pkg)
-	err := buildOrigArchive(spkg, bp) // it's up to you how to build this
+	err := buildOrigArchive(spkg) // it's up to you how to build this
 	if err != nil {
 		log.Fatalf("Error building source package: %v", err)
 	}
-	err = buildDebianArchive(spkg, bp) // again - do it yourself
+	err = buildDebianArchive(spkg) // again - do it yourself
 	if err != nil {
 		log.Fatalf("Error building source package: %v", err)
 	}
-	err = buildDscFile(spkg, bp) // yep, same again
+	err = buildDscFile(spkg) // yep, same again
 	if err != nil {
 		log.Fatalf("Error building source package: %v", err)
 	}
@@ -32,25 +30,23 @@ func Example_buildSourceDeb() {
 func Test_buildSourceDeb(t *testing.T) {
 	pkg := deb.NewPackage("testpkg", "0.0.2", "me <me@b.c>", "Nice of all the package\n")
 	pkg.Description = "hiya"
-	bp := deb.NewBuildParams()
-	bp.Init()
 	spkg := deb.NewSourcePackage(pkg)
-	err := buildOrigArchive(spkg, bp) // it's up to you how to build this
+	err := buildOrigArchive(spkg) // it's up to you how to build this
 	if err != nil {
 		t.Fatalf("Error building source package: %v", err)
 	}
-	err = buildDebianArchive(spkg, bp) // again - do it yourself
+	err = buildDebianArchive(spkg) // again - do it yourself
 	if err != nil {
 		t.Fatalf("Error building source package: %v", err)
 	}
-	err = buildDscFile(spkg, bp) // yep, same again
+	err = buildDscFile(spkg) // yep, same again
 	if err != nil {
 		t.Fatalf("Error building source package: %v", err)
 	}
 }
 
-func buildOrigArchive(spkg *deb.SourcePackage, build *deb.BuildParams) error {
-	origFilePath := filepath.Join(build.DestDir, spkg.OrigFileName)
+func buildOrigArchive(spkg *deb.SourcePackage) error {
+	origFilePath := filepath.Join(deb.DistDirDefault, spkg.OrigFileName)
 	tgzw, err := targz.NewWriterFromFile(origFilePath)
 	if err != nil {
 		return err
@@ -63,8 +59,8 @@ func buildOrigArchive(spkg *deb.SourcePackage, build *deb.BuildParams) error {
 	return nil
 }
 
-func buildDebianArchive(spkg *deb.SourcePackage, build *deb.BuildParams) error {
-	tgzw, err := targz.NewWriterFromFile(filepath.Join(build.DestDir, spkg.DebianFileName))
+func buildDebianArchive(spkg *deb.SourcePackage) error {
+	tgzw, err := targz.NewWriterFromFile(filepath.Join(deb.DistDirDefault, spkg.DebianFileName))
 	if err != nil {
 		return err
 	}
@@ -76,9 +72,9 @@ func buildDebianArchive(spkg *deb.SourcePackage, build *deb.BuildParams) error {
 	return nil
 }
 
-func buildDscFile(spkg *deb.SourcePackage, build *deb.BuildParams) error {
+func buildDscFile(spkg *deb.SourcePackage) error {
 	dscData := []byte{} //generate this somehow. DIY (or see 'debgen' package in this repository)!
-	dscFilePath := filepath.Join(build.DestDir, spkg.DscFileName)
+	dscFilePath := filepath.Join(deb.DistDirDefault, spkg.DscFileName)
 	err := ioutil.WriteFile(dscFilePath, dscData, 0644)
 	if err != nil {
 		return err

@@ -13,7 +13,7 @@ func main() {
 	//set to empty strings because they're being overridden
 	pkg := deb.NewPackage("", "", "", "")
 	debgen.ApplyGoDefaults(pkg)
-	build := deb.NewBuildParams()
+	build := debgen.NewBuildParams()
 	err := build.Init()
 	if err != nil {
 		log.Fatalf("%v", err)

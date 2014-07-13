@@ -13,19 +13,13 @@ import (
 
 func Example_buildBinaryDeb() {
 
-	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "lovely package")
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "lovely package\n")
 	pkg.Description = "hiya"
-	build := deb.NewBuildParams()
-	err := build.Init()
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-
 	exesMap := map[string][]string{
 		"amd64": []string{filepath.Join(deb.TempDirDefault, "/a.amd64")},
 		"i386":  []string{filepath.Join(deb.TempDirDefault, "/a.i386")},
 		"armhf": []string{filepath.Join(deb.TempDirDefault, "/a.armhf")}}
-	err = createExes(exesMap)
+	err := createExes(exesMap)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
@@ -51,19 +45,12 @@ func Example_buildBinaryDeb() {
 
 func Test_buildBinaryDeb(t *testing.T) {
 
-	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "lovely package")
-	pkg.Description = "hiya"
-	build := deb.NewBuildParams()
-	err := build.Init()
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-
+	pkg := deb.NewPackage("testpkg", "0.0.2", "me", "lovely package\n")
 	exesMap := map[string][]string{
 		"amd64": []string{filepath.Join(deb.TempDirDefault, "a.amd64")},
 		"i386":  []string{filepath.Join(deb.TempDirDefault, "a.i386")},
 		"armhf": []string{filepath.Join(deb.TempDirDefault, "a.armhf")}}
-	err = createExes(exesMap)
+	err := createExes(exesMap)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -74,8 +61,8 @@ func Test_buildBinaryDeb(t *testing.T) {
 	artifacts[deb.ArchAmd64].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.amd64")}
 	artifacts[deb.ArchI386].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.i386")}
 	artifacts[deb.ArchArmhf].MappedFiles = map[string]string{"/usr/bin/a": filepath.Join(deb.TempDirDefault, "/a.armhf")}
-	buildDeb := func(art *deb.Deb, build *deb.BuildParams) error {
-		archiveFilename := filepath.Join(build.TmpDir, art.DebianArchive)
+	buildDeb := func(art *deb.Deb) error {
+		archiveFilename := filepath.Join(deb.TempDirDefault, art.DebianArchive)
 		controlTgzw, err := targz.NewWriterFromFile(archiveFilename)
 		if err != nil {
 			return err
@@ -96,7 +83,7 @@ func Test_buildBinaryDeb(t *testing.T) {
 			return err
 		}
 
-		archiveFilename = filepath.Join(build.TmpDir, art.DataArchive)
+		archiveFilename = filepath.Join(deb.TempDirDefault, art.DataArchive)
 		dataTgzw, err := targz.NewWriterFromFile(archiveFilename)
 		if err != nil {
 			return err
@@ -107,7 +94,7 @@ func Test_buildBinaryDeb(t *testing.T) {
 			return err
 		}
 		//generate artifact here ...
-		err = art.Build(build.TmpDir, build.DestDir)
+		err = art.Build(deb.TempDirDefault, deb.DistDirDefault)
 		if err != nil {
 			return err
 		}
@@ -115,7 +102,7 @@ func Test_buildBinaryDeb(t *testing.T) {
 	}
 	for arch, artifact := range artifacts {
 		//build binary deb here ...
-		err = buildDeb(artifact, build)
+		err = buildDeb(artifact)
 		if err != nil {
 			t.Fatalf("Error building for '%s': %v", arch, err)
 		}

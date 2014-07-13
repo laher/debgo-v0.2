@@ -68,6 +68,12 @@ func NewPackage(name, version, maintainer, description string) *Package {
 	pkg.Version = version
 	pkg.Maintainer = maintainer
 	pkg.Description = description
+	SetDefaults(pkg)
+	return pkg
+}
+
+// Sets fields which can be initialised appropriately
+func SetDefaults(pkg *Package) {
 	pkg.Architecture = "any" //default ...
 	pkg.Priority = PriorityDefault
 	pkg.StandardsVersion = StandardsVersionDefault
@@ -75,7 +81,6 @@ func NewPackage(name, version, maintainer, description string) *Package {
 	pkg.Format = FormatDefault
 	pkg.Status = StatusDefault
 	pkg.MappedFiles = map[string]string{}
-	return pkg
 }
 
 // GetArches resolves architecture(s) and return as a slice

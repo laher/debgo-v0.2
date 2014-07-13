@@ -23,7 +23,7 @@ import (
 
 // Default build function for Dev packages.
 // Implement your own if you prefer
-func GenDevArtifact(ddpkg *deb.Package, build *deb.BuildParams) error {
+func GenDevArtifact(ddpkg *deb.Package, build *BuildParams) error {
 	artifacts, err := deb.NewDebs(ddpkg)
 	if err != nil {
 		return err

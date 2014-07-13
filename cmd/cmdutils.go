@@ -4,10 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"github.com/laher/debgo-v0.2/deb"
+	"github.com/laher/debgo-v0.2/debgen"
 	"os"
 )
 
-func InitFlags(name string, pkg *deb.Package, build *deb.BuildParams) *flag.FlagSet {
+func InitFlags(name string, pkg *deb.Package, build *debgen.BuildParams) *flag.FlagSet {
 
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 
