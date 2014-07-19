@@ -23,13 +23,15 @@ import (
 
 // Default build function for Dev packages.
 // Implement your own if you prefer
-func GenDevArtifact(ddpkg *deb.Package, build *BuildParams) error {
+func GenDevArtifact(ddpkg *deb.Package, build *BuildParams, mappedFiles map[string]string) error {
 	artifacts, err := deb.NewDebWriters(ddpkg)
 	if err != nil {
 		return err
 	}
 	for arch, artifact := range artifacts {
-		err = GenDeb(artifact, build)
+		dgen := NewDebGenerator(artifact, build)
+		dgen.OrigFiles = mappedFiles
+		err = dgen.GenerateAllDefault()
 		if err != nil {
 			return fmt.Errorf("Error building for '%s': %v", arch, err)
 		}

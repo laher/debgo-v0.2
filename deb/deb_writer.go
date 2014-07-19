@@ -57,6 +57,7 @@ func NewDebWriter(pkg *Package, architecture Architecture) *DebWriter {
 	return bdeb
 }
 
+/*
 // GetReader opens up a new .ar reader
 func (bdeb *DebWriter) GetReader() (*ar.Reader, error) {
 	fi, err := os.Open(bdeb.Filename)
@@ -106,6 +107,7 @@ func (bdeb *DebWriter) ExtractAll(destDir string) ([]string, error) {
 	}
 	return filenames, nil
 }
+*/
 
 // SetDefaults sets some default properties
 func (bdeb *DebWriter) SetDefaults() {

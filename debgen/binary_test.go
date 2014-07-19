@@ -28,7 +28,8 @@ func Example_genBinaryPackage() {
 
 	for arch, artifact := range artifacts {
 		log.Printf("generating artifact '%s'/%v", arch, artifact)
-		err = debgen.GenDeb(artifact, build)
+		dgen := debgen.NewDebGenerator(artifact, build)
+		err = dgen.GenerateAllDefault()
 		if err != nil {
 			log.Fatalf("Error building for '%s': %v", arch, err)
 		}

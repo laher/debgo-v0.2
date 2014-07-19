@@ -19,7 +19,7 @@ tar-ignore = .bzr` //specifies files to ignore while building.
 #export DH_VERBOSE=1
 
 %:
-        dh $@`
+	dh $@`
 
 	// The debian rules file describes how to build a 'source deb' into a binary deb. This version contains a special script for building go packages.
 	TemplateDebianRulesForGo = `#!/usr/bin/make -f
@@ -38,13 +38,12 @@ PKGDIR=debian/{{.Package.Name}}
 clean:
 	dh_clean
 	rm -rf $(CURDIR)/bin/* $(CURDIR)/pkg/*
-	#cd $(CURDIR)/src && find * -name '*.go' -exec dirname {} \; | xargs -n1 go clean
 	rm -f $(CURDIR)/goinstall.log
 
 binary-arch: clean
 	dh_prep
 	dh_installdirs
-	cd $(CURDIR)/src && find * -name '*.go' -exec dirname {} \; | xargs -n1 go install
+	cd $(CURDIR)/src && go install ./...
 
 	mkdir -p $(PKGDIR)/usr/bin $(CURDIR)/bin/
 	mkdir -p $(PKGDIR)/usr/share/gopkg/ $(CURDIR)/pkg/

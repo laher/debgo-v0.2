@@ -35,7 +35,7 @@ type BuildParams struct {
 	TemplateDir  string // Optional. Only required if you're using templates
 	ResourcesDir string // Optional. Only if debgo packages your resources automatically.
 
-	TemplateStringsSource map[string]string //Populate this to fulfil templates for the different control files.
+	//TemplateStringsSource map[string]string //Populate this to fulfil templates for the different control files.
 }
 
 //Factory for BuildParams. Populates defaults.
@@ -47,10 +47,6 @@ func NewBuildParams() *BuildParams {
 	bp.WorkingDir = deb.WorkingDirDefault
 	bp.TemplateDir = deb.TemplateDirDefault
 	bp.ResourcesDir = deb.ResourcesDirDefault
-	bp.TemplateStringsSource = map[string]string{}
-	for k, v := range TemplateStringsSourceDefault {
-		bp.TemplateStringsSource[k] = v
-	}
 	return bp
 }
 

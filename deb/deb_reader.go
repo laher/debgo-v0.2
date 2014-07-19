@@ -17,8 +17,8 @@
 package deb
 
 import (
-	"bufio"
 	"fmt"
+	"archive/tar"
 	"github.com/laher/argo/ar"
 	"github.com/laher/debgo-v0.2/targz"
 	"io"
@@ -26,6 +26,43 @@ import (
 	"log"
 	"strings"
 )
+
+type DebReader struct {
+	Reader io.Reader
+	ArReader *ar.Reader
+	HasDebianVersion bool
+}
+
+func NewDebReader(rdr io.Reader) (*DebReader, error) {
+	drdr := &DebReader{Reader:rdr, HasDebianVersion: false}
+	arr, err := ar.NewReader(rdr)
+	if err != nil {
+		return nil, err
+	}
+	drdr.ArReader = arr
+	return drdr, err
+}
+
+//Gets next tar header for supported types
+func (drdr *DebReader) NextTar() (string, *tar.Reader, error) {
+	for {
+		hdr, err := drdr.ArReader.Next()
+		if err != nil {
+			return "", nil, err
+		}
+		if hdr.Name == "debian-binary" {
+			drdr.HasDebianVersion = true
+			continue
+		}
+		if strings.HasSuffix(hdr.Name, ".tar.gz") {
+			tgzr, err := targz.NewReader(drdr.ArReader)
+			return hdr.Name, tgzr.Reader, err
+		}
+		// else return error
+		return hdr.Name, nil, fmt.Errorf("Unsuported file type: %s", hdr.Name)
+	}
+}
+
 
 func DebGetContents(rdr io.Reader, topLevelFilename string) ([]string, error) {
 	ret := []string{}
@@ -123,8 +160,8 @@ func DebParseMetadata(rdr io.Reader) (*Package, error) {
 		return nil, err
 	}
 
-	pkg := &Package{}
-
+	var pkg *Package
+	pkg = nil
 	hasDataArchive := false
 	hasControlArchive := false
 	hasControlFile := false
@@ -162,22 +199,11 @@ func DebParseMetadata(rdr io.Reader) (*Package, error) {
 				}
 				if thdr.Name == "control" {
 					hasControlFile = true
-					br := bufio.NewReader(tgzr)
-					for {
-						line, err := br.ReadString('\n')
-						if err == io.EOF {
-							break
-						}
-						if err != nil {
-							return nil, err
-						}
-						if strings.Contains(line, ":") {
-							res := strings.SplitN(line, ":", 2)
-							log.Printf("Control File entry: '%s': %s", res[0], res[1])
-							pkg.SetField(res[0], res[1])
-						}
+					dscr := NewDscReader(tgzr)
+					pkg, err = dscr.Parse()
+					if err != nil {
+						return nil, err
 					}
-
 				} else {
 					//SKIP
 					log.Printf("File %s", thdr.Name)

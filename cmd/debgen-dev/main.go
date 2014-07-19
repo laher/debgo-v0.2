@@ -13,7 +13,7 @@ func main() {
 	//set to empty strings because they're being overridden
 	pkg := deb.NewPackage("", "", "", "")
 	build := debgen.NewBuildParams()
-	debgen.ApplyGoDefaults(pkg, build)
+	debgen.ApplyGoDefaults(pkg)
 	fs := cmdutils.InitFlags(name, pkg, build)
 	fs.StringVar(&pkg.Architecture, "arch", "all", "Architectures [any,386,armhf,amd64,all]")
 	ddpkg := deb.NewDevPackage(pkg)
@@ -34,7 +34,7 @@ func main() {
 	if sourcesRelativeTo == "" {
 		sourcesRelativeTo = debgen.GetGoPathElement(sourceDir)
 	}
-	ddpkg.MappedFiles, err = debgen.GlobForSources(sourcesRelativeTo, sourceDir, glob, sourcesDestinationDir, []string{build.TmpDir, build.DestDir})
+	mappedFiles, err := debgen.GlobForSources(sourcesRelativeTo, sourceDir, glob, sourcesDestinationDir, []string{build.TmpDir, build.DestDir})
 	if err != nil {
 		log.Fatalf("Error resolving sources: %v", err)
 	}
@@ -42,7 +42,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error creating build directories: %v", err)
 	}
-	err = debgen.GenDevArtifact(ddpkg, build)
+	err = debgen.GenDevArtifact(ddpkg, build, mappedFiles)
 	if err != nil {
 		log.Fatalf("Error building -dev: %v", err)
 	}

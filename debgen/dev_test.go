@@ -14,12 +14,12 @@ func Example_genDevPackage() {
 	build.IsRmtemp = false
 	build.Init()
 	var err error
-	ddpkg.MappedFiles, err = debgen.GlobForGoSources(".", []string{build.TmpDir, build.DestDir})
+	mappedFiles, err := debgen.GlobForGoSources(".", []string{build.TmpDir, build.DestDir})
 	if err != nil {
 		log.Fatalf("Error building -dev: %v", err)
 	}
 
-	err = debgen.GenDevArtifact(ddpkg, build)
+	err = debgen.GenDevArtifact(ddpkg, build, mappedFiles)
 	if err != nil {
 		log.Fatalf("Error building -dev: %v", err)
 	}

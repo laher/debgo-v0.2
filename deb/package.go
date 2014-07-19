@@ -58,7 +58,7 @@ type Package struct {
 
 	ExtraData map[string]interface{} // Optional for templates
 
-	MappedFiles map[string]string
+	//MappedFiles map[string]string
 }
 
 // NewPackage is a factory for a Package. Name, Version, Maintainer and Description are mandatory.
@@ -80,7 +80,7 @@ func SetDefaults(pkg *Package) {
 	pkg.Section = SectionDefault
 	pkg.Format = FormatDefault
 	pkg.Status = StatusDefault
-	pkg.MappedFiles = map[string]string{}
+	//pkg.MappedFiles = map[string]string{}
 }
 
 // GetArches resolves architecture(s) and return as a slice

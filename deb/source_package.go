@@ -22,7 +22,7 @@ type SourcePackage struct {
 	DscFileName    string
 	OrigFileName   string
 	DebianFileName string
-	MappedFiles    map[string]string
+	DebianFiles    []string
 }
 
 // NewSourcePackage is a factory for SourcePackage. Sets up default paths..

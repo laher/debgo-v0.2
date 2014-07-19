@@ -13,7 +13,7 @@ func main() {
 	//set to empty strings because they're being overridden
 	pkg := deb.NewPackage("", "", "", "")
 	build := debgen.NewBuildParams()
-	debgen.ApplyGoDefaults(pkg, build)
+	debgen.ApplyGoDefaults(pkg)
 	fs := cmdutils.InitFlags(name, pkg, build)
 	fs.StringVar(&pkg.Architecture, "arch", "all", "Architectures [any,386,armhf,amd64,all]")
 
@@ -36,11 +36,12 @@ func main() {
 	}
 	spkg := deb.NewSourcePackage(pkg)
 	sourcesDestinationDir := pkg.Name + "_" + pkg.Version
-	spkg.MappedFiles, err = debgen.GlobForSources(sourcesRelativeTo, sourceDir, glob, sourcesDestinationDir, []string{build.TmpDir, build.DestDir})
+	spgen := debgen.NewSourcePackageGenerator(spkg, build) 
+	spgen.OrigFiles, err = debgen.GlobForSources(sourcesRelativeTo, sourceDir, glob, sourcesDestinationDir, []string{build.TmpDir, build.DestDir})
 	if err != nil {
 		log.Fatalf("Error resolving sources: %v", err)
 	}
-	err = debgen.GenSourceArtifacts(spkg, build) //, sourceDir, sourcesRelativeTo)
+	err = spgen.GenerateAllDefault()
 	if err != nil {
 		log.Fatalf("%v", err)
 	}

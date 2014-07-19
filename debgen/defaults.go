@@ -22,7 +22,7 @@ import (
 
 // Applies go-specific information to packages.
 // Includes dependencies, Go Path information.
-func ApplyGoDefaults(pkg *deb.Package, bp *BuildParams) {
+func ApplyGoDefaults(pkg *deb.Package) {
 	if pkg.ExtraData == nil {
 		pkg.ExtraData = map[string]interface{}{}
 	}
@@ -38,5 +38,4 @@ func ApplyGoDefaults(pkg *deb.Package, bp *BuildParams) {
 	pkg.BuildDepends = deb.BuildDependsDefault
 	pkg.Depends = deb.DependsDefault
 
-	bp.TemplateStringsSource["debian/rules"] = TemplateDebianRulesForGo
 }
