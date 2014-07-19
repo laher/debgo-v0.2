@@ -112,7 +112,7 @@ func GlobForSources(sourcesRelativeDir, codeDir, glob, destinationPrefix string,
 	for _, match := range matches {
 		ignore := false
 		for _, ignoreFile := range ignoreFiles {
-			if match == ignoreFile {
+			if match == filepath.Base(ignoreFile) {
 				ignore = true
 			}
 		}
@@ -136,7 +136,7 @@ func GlobForSources(sourcesRelativeDir, codeDir, glob, destinationPrefix string,
 		if fi.IsDir() {
 			ignore := false
 			for _, ignoreFile := range ignoreFiles {
-				if fi.Name() == ignoreFile {
+				if fi.Name() == filepath.Base(ignoreFile) {
 					ignore = true
 				}
 			}
