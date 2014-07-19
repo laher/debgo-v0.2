@@ -19,6 +19,9 @@ func InitFlags(name string, pkg *deb.Package, build *debgen.BuildParams) *flag.F
 	fs.BoolVar(&build.IsRmtemp, "rmtemp", false, "Remove 'temp' dirs")
 	fs.BoolVar(&build.IsVerbose, "verbose", false, "Show log messages")
 
+	fs.StringVar(&build.WorkingDir, "working-dir", build.WorkingDir, "Working directory")
+	fs.StringVar(&build.TemplateDir, "template-dir", build.TemplateDir, "Template directory")
+	fs.StringVar(&build.ResourcesDir, "resources-dir", build.ResourcesDir, "Resources directory")
 	return fs
 }
 

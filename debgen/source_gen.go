@@ -31,7 +31,7 @@ import (
 type SourcePackageGenerator struct {
 	SourcePackage *deb.SourcePackage
 	BuildParams *BuildParams
-	DefaultTemplateStrings map[string]string
+	TemplateStrings map[string]string
 	//DebianFiles map[string]string
 	OrigFiles map[string]string
 }
@@ -39,13 +39,13 @@ type SourcePackageGenerator struct {
 //NewSourcePackageGenerator is a factory for SourcePackageGenerator.
 func NewSourcePackageGenerator(sourcePackage *deb.SourcePackage, buildParams *BuildParams) *SourcePackageGenerator {
 	spgen := &SourcePackageGenerator{SourcePackage:sourcePackage, BuildParams:buildParams}
-	spgen.DefaultTemplateStrings = defaultTemplateStrings()
+	spgen.TemplateStrings = defaultTemplateStrings()
 	return spgen
 }
 
 // ApplyDefaultsPureGo overrides some template variables for pure-Go packages
 func (spgen *SourcePackageGenerator) ApplyDefaultsPureGo() {
-	spgen.DefaultTemplateStrings["debian/rules"] = TemplateDebianRulesForGo
+	spgen.TemplateStrings["debian/rules"] = TemplateDebianRulesForGo
 }
 
 // Get the default templates for source packages
@@ -112,10 +112,11 @@ func (spgen *SourcePackageGenerator) GenDebianArchive() error {
 	// generate .debian.tar.gz (just containing debian/ directory)
 	tgzw, err := targz.NewWriterFromFile(filepath.Join(spgen.BuildParams.DestDir, spgen.SourcePackage.DebianFileName))
 	defer tgzw.Close()
-	resourceDir := filepath.Join(spgen.BuildParams.TemplateDir, "source", DebianDir)
+	resourceDir := filepath.Join(spgen.BuildParams.ResourcesDir, "source", DebianDir)
 	templateDir := filepath.Join(spgen.BuildParams.TemplateDir, "source", DebianDir)
 
-	for debianFile, defaultTemplateStr := range spgen.DefaultTemplateStrings {
+	//TODO change this to iterate over specified list of files.
+	for debianFile, defaultTemplateStr := range spgen.TemplateStrings {
 		debianFilePath := strings.Replace(debianFile, "/", string(os.PathSeparator), -1) //fixing source/options, source/format for local files
 		resourcePath := filepath.Join(resourceDir, debianFilePath)
 		_, err = os.Stat(resourcePath)

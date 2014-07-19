@@ -117,7 +117,8 @@ Files:{{range .Checksums.ChecksumsMd5}}
 	TemplateChangelogHeader       = `{{.Package.Name}} ({{.Package.Version}}) {{.Package.Status}}; urgency=low`
 	TemplateChangelogInitialEntry = `  * Initial import`
 	TemplateChangelogFooter       = ` -- {{.Package.Maintainer}}  {{.EntryDate}}`
-	TemplateChangelogInitial      = TemplateChangelogHeader + "\n\n" + TemplateChangelogInitialEntry + "\n\n" + TemplateChangelogFooter // + "\n\n"
+	TemplateChangelogInitial      = TemplateChangelogHeader + "\n\n" + TemplateChangelogInitialEntry + "\n\n" + TemplateChangelogFooter
+	TemplateChangelogAdditionalEntry  = "\n\n" + TemplateChangelogHeader + "\n\n{{.ChangelogEntry}}\n\n" + TemplateChangelogFooter
 	TemplateDebianCopyright       = `Copyright 2014 {{.Package.Name}}`
 	TemplateDebianReadme          = `{{.Package.Name}}
 ==========
